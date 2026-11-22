@@ -1,0 +1,3854 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Crônicas da Bruxa Roxa & O Gato Sombrio</title>
+  <!-- Tailwind CSS para UI moderna e responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cinzel & Quicksand -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0716;
+      font-family: 'Quicksand', sans-serif;
+      color: #f3e8ff;
+    }
+    #game-canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      cursor: crosshair;
+    }
+    .font-magic {
+      font-family: 'Cinzel', serif;
+    }
+    .glass-panel {
+      background: linear-gradient(145deg, rgba(22, 12, 44, 0.76) 0%, rgba(12, 7, 26, 0.84) 100%);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(192, 132, 252, 0.32);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(250, 204, 21, 0.16), inset 0 0 18px rgba(139, 92, 246, 0.14);
+    }
+    .glass-gold-border {
+      border: 1px solid rgba(250, 204, 21, 0.38);
+      box-shadow: 0 10px 32px rgba(0, 0, 0, 0.65), inset 0 0 16px rgba(250, 204, 21, 0.1);
+    }
+    .btn-magic {
+      background: linear-gradient(135deg, #7e22ce 0%, #4c1d95 100%);
+      border: 1px solid #fde047;
+      box-shadow: 0 0 22px rgba(168, 85, 247, 0.5), inset 0 1px 0 rgba(254, 240, 138, 0.4);
+      transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-magic:hover {
+      transform: translateY(-2px) scale(1.03);
+      box-shadow: 0 0 32px rgba(192, 132, 252, 0.85), 0 0 12px rgba(250, 204, 21, 0.4);
+      background: linear-gradient(135deg, #9333ea 0%, #5b21b6 100%);
+    }
+    .btn-magic:active {
+      transform: translateY(1px) scale(0.98);
+    }
+    .skill-btn {
+      transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .skill-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(168, 85, 247, 0.35);
+    }
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 10px rgba(192, 132, 252, 0.65)); }
+      50% { filter: drop-shadow(0 0 22px rgba(250, 204, 21, 0.75)); }
+    }
+    .glow-title {
+      animation: pulseGlow 3.2s infinite ease-in-out;
+    }
+    @keyframes floatMsg {
+      0% { opacity: 0; transform: translate(-50%, 10px) scale(0.94); }
+      15% { opacity: 1; transform: translate(-50%, 0px) scale(1); }
+      85% { opacity: 1; transform: translate(-50%, -4px) scale(1); }
+      100% { opacity: 0; transform: translate(-50%, -14px) scale(0.98); }
+    }
+    .toast-anim {
+      animation: floatMsg 2.6s forwards ease-out;
+    }
+    @keyframes dmgFloat {
+      0% { opacity: 1; transform: translate(-50%, 0px) scale(0.85); }
+      20% { opacity: 1; transform: translate(-50%, -14px) scale(1.12); }
+      100% { opacity: 0; transform: translate(-50%, -46px) scale(0.95); }
+    }
+    .dmg-popup {
+      position: fixed;
+      pointer-events: none;
+      font-family: 'Cinzel', serif;
+      font-weight: 900;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 12px currentColor;
+      animation: dmgFloat 0.95s forwards cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 15;
+    }
+    /* Barras de Vida Flutuantes dos Monstros */
+    .enemy-hp-bar {
+      position: fixed;
+      pointer-events: none;
+      transform: translate(-50%, -100%);
+      transition: opacity 0.16s ease;
+      will-change: left, top, transform, opacity;
+    }
+    .enemy-hp-frame {
+      background: rgba(11, 7, 22, 0.86);
+      border: 1px solid rgba(192, 132, 252, 0.45);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7), inset 0 0 6px rgba(139, 92, 246, 0.28);
+      backdrop-filter: blur(4px);
+    }
+    .enemy-hp-frame.boss {
+      border: 1px solid rgba(250, 204, 21, 0.78);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.82), 0 0 14px rgba(217, 70, 239, 0.35), inset 0 0 8px rgba(250, 204, 21, 0.22);
+    }
+    .enemy-hp-frame.frozen {
+      border-color: rgba(103, 232, 249, 0.85);
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.55);
+    }
+    /* Partículas e Emblemas do Menu / Fim de Jogo */
+    @keyframes floatSlow {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-7px) rotate(2deg); }
+    }
+    .crest-float {
+      animation: floatSlow 4.2s infinite ease-in-out;
+    }
+    @keyframes modalReveal {
+      0% { opacity: 0; transform: scale(0.93) translateY(14px); }
+      100% { opacity: 1; transform: scale(1) translateY(0px); }
+    }
+    .modal-reveal {
+      animation: modalReveal 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .diff-pill {
+      transition: all 0.2s ease;
+    }
+    .diff-pill.active {
+      background: linear-gradient(135deg, rgba(126, 34, 206, 0.85) 0%, rgba(76, 29, 149, 0.92) 100%);
+      border-color: #fde047;
+      color: #fef08a;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.45), inset 0 1px 0 rgba(254, 240, 138, 0.35);
+    }
+    @keyframes urgentPulse {
+      0%, 100% { transform: scale(1); text-shadow: 0 0 12px rgba(244, 63, 94, 0.85); }
+      50% { transform: scale(1.08); text-shadow: 0 0 24px rgba(251, 113, 133, 1); }
+    }
+    .timer-urgent {
+      color: #fda4af !important;
+      animation: urgentPulse 0.8s infinite ease-in-out;
+    }
+  </style>
+  <!-- Import Map para Three.js r128 + Pós-Processamento (EffectComposer & UnrealBloomPass) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
+        "three/examples/jsm/postprocessing/EffectComposer.js": "https://unpkg.com/three@0.128.0/examples/jsm/postprocessing/EffectComposer.js",
+        "three/examples/jsm/postprocessing/RenderPass.js": "https://unpkg.com/three@0.128.0/examples/jsm/postprocessing/RenderPass.js",
+        "three/examples/jsm/postprocessing/UnrealBloomPass.js": "https://unpkg.com/three@0.128.0/examples/jsm/postprocessing/UnrealBloomPass.js",
+        "three/examples/jsm/postprocessing/ShaderPass.js": "https://unpkg.com/three@0.128.0/examples/jsm/postprocessing/ShaderPass.js",
+        "three/examples/jsm/shaders/LuminosityHighPassShader.js": "https://unpkg.com/three@0.128.0/examples/jsm/shaders/LuminosityHighPassShader.js",
+        "three/examples/jsm/shaders/CopyShader.js": "https://unpkg.com/three@0.128.0/examples/jsm/shaders/CopyShader.js"
+      }
+    }
+  </script>
+</head>
+<body>
+
+  <!-- Canvas Principal 3D -->
+  <canvas id="game-canvas"></canvas>
+
+  <!-- Camada de Barras de Vida Flutuantes dos Monstros -->
+  <div id="enemy-hp-layer" class="fixed inset-0 pointer-events-none z-10 overflow-hidden"></div>
+
+  <!-- Camada de Números de Dano Flutuantes -->
+  <div id="damage-layer" class="fixed inset-0 pointer-events-none z-10 overflow-hidden"></div>
+
+  <!-- Retícula Arcana Central (Mira da Câmera) -->
+  <div id="crosshair" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10 flex items-center justify-center">
+    <svg width="34" height="34" viewBox="0 0 34 34" fill="none" class="drop-shadow-[0_0_8px_rgba(217,70,239,0.85)]">
+      <circle cx="17" cy="17" r="11" stroke="#e879f9" stroke-opacity="0.65" stroke-width="1.2" stroke-dasharray="4 3"/>
+      <path d="M17 2V6M17 28V32M2 17H6M28 17H32" stroke="#fde047" stroke-opacity="0.8" stroke-width="1.4" stroke-linecap="round"/>
+      <circle cx="17" cy="17" r="2" fill="#fef08a"/>
+    </svg>
+  </div>
+
+  <!-- HUD em Jogo -->
+  <div id="hud" class="hidden fixed inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-4 z-10">
+    
+    <!-- Barra Superior -->
+    <div class="flex flex-wrap items-start justify-between gap-2 sm:gap-3">
+      
+      <!-- Status da Bruxa e do Gato -->
+      <div class="glass-panel rounded-2xl p-3 w-full sm:w-80 pointer-events-auto">
+        <div class="flex items-center justify-between mb-1">
+          <span class="font-bold text-xs sm:text-sm text-purple-100 flex items-center gap-1.5">
+            <span class="inline-block w-2.5 h-2.5 rounded-full bg-fuchsia-400 shadow-[0_0_10px_#e879f9]"></span>
+            Bruxa Arcana
+            <span id="shield-badge" class="hidden text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/25 text-cyan-200 border border-amber-300/60 font-semibold">Escudo Lunar</span>
+          </span>
+          <span id="hp-text" class="text-xs font-bold text-rose-300">100 / 100</span>
+        </div>
+        <!-- Barra de Vida -->
+        <div class="w-full h-2.5 bg-slate-950/90 rounded-full overflow-hidden border border-purple-400/30 mb-2 p-[1px]">
+          <div id="hp-bar" class="h-full rounded-full bg-gradient-to-r from-rose-600 via-fuchsia-500 to-purple-300 transition-all duration-150" style="width: 100%;"></div>
+        </div>
+
+        <div class="flex items-center justify-between mb-1">
+          <span class="text-xs font-semibold text-cyan-200">Mana Estelar</span>
+          <span id="mana-text" class="text-xs font-bold text-cyan-300">100 / 100</span>
+        </div>
+        <!-- Barra de Mana -->
+        <div class="w-full h-2 bg-slate-950/90 rounded-full overflow-hidden border border-cyan-400/30 mb-2.5 p-[1px]">
+          <div id="mana-bar" class="h-full rounded-full bg-gradient-to-r from-indigo-600 via-violet-500 to-cyan-300 transition-all duration-150" style="width: 100%;"></div>
+        </div>
+
+        <!-- Status do Gato Preto -->
+        <div id="cat-status-box" class="flex items-center justify-between bg-indigo-950/65 border border-purple-400/30 rounded-xl px-2.5 py-1.5 transition-colors">
+          <div class="flex items-center gap-2">
+            <span id="cat-icon" class="w-6 h-6 rounded-lg bg-purple-900/80 border border-amber-300/40 flex items-center justify-center text-amber-300">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 3c-1.5 0-2.8.4-3.9 1.1L5 2v5.5C4.4 8.6 4 9.8 4 11c0 4.4 3.6 8 8 8s8-3.6 8-8c0-1.2-.4-2.4-1-3.5V2l-3.1 2.1C14.8 3.4 13.5 3 12 3zm-3 7.5a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm6 0a1.5 1.5 0 110 3 1.5 1.5 0 010-3zm-3 3.5l1.5 1.5h-3L12 14z"/>
+              </svg>
+            </span>
+            <div>
+              <div id="cat-name-label" class="text-xs font-bold text-amber-200 leading-tight">Gato Sombrio</div>
+              <div id="cat-status-text" class="text-[11px] text-purple-300 leading-tight">Seguindo e vigiando</div>
+            </div>
+          </div>
+          <span id="cat-cd-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40">
+            Pronto [E]
+          </span>
+        </div>
+      </div>
+
+      <!-- Painel Central: Cronômetro do Eclipse, Onda e Pontos -->
+      <div class="glass-panel glass-gold-border rounded-2xl px-4 py-2 flex items-center gap-3 sm:gap-5 mx-auto sm:mx-0">
+        <div class="text-center">
+          <div class="text-[10px] uppercase tracking-wider text-amber-300/90 flex items-center justify-center gap-1 font-bold">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 2h14M5 22h14M7 2v5l5 5 5-5V2M7 22v-5l5-5 5 5v5"/></svg>
+            Eclipse
+          </div>
+          <div id="timer-text" class="font-magic text-lg sm:text-2xl font-black text-amber-200 tracking-wider">03:00</div>
+        </div>
+        <div class="h-8 w-px bg-amber-300/25"></div>
+        <div class="text-center">
+          <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">Onda</div>
+          <div id="wave-text" class="font-magic text-base sm:text-xl font-black text-purple-200">1</div>
+        </div>
+        <div class="h-8 w-px bg-purple-400/25"></div>
+        <div class="text-center">
+          <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">Abates</div>
+          <div id="kills-text" class="text-base sm:text-lg font-bold text-emerald-300">0</div>
+        </div>
+        <div class="h-8 w-px bg-purple-400/25"></div>
+        <div class="text-center">
+          <div class="text-[10px] uppercase tracking-wider text-purple-300 font-bold">Pontos</div>
+          <div id="score-text" class="text-base sm:text-lg font-bold text-cyan-300">0</div>
+        </div>
+      </div>
+
+      <!-- Botões de Utilidade (Câmera & Áudio) -->
+      <div class="flex items-center gap-2 pointer-events-auto">
+        <button id="btn-camera-lock" title="Travar mira do mouse (Pointer Lock)" class="glass-panel hover:bg-purple-900/50 text-purple-200 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fde047" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2"/><path d="M12 1v4M12 19v4M1 12h4M19 12h4"/></svg>
+          <span id="camera-mode-label" class="hidden md:inline">Travar Mira (Mouse)</span>
+        </button>
+        <button id="btn-mute" title="Ativar/Desativar Som" class="glass-panel hover:bg-purple-900/50 text-purple-200 p-2.5 rounded-xl text-sm transition cursor-pointer">
+          🔊
+        </button>
+      </div>
+    </div>
+
+    <!-- Mensagem Dinâmica Flutuante -->
+    <div id="toast-container" class="fixed top-24 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex flex-col items-center gap-2"></div>
+
+    <!-- Barra Inferior: Arsenal Completo de Poderes & Controles com Ícones Vetoriais SVG -->
+    <div class="flex flex-col items-center gap-1.5">
+      <div class="glass-panel glass-gold-border rounded-2xl p-2 flex flex-wrap justify-center items-center gap-1.5 sm:gap-2.5 pointer-events-auto">
+        
+        <!-- Poder Básico: Orbe Arcano -->
+        <button id="skill-orb" title="Orbe Arcano (Regenera +4 Mana ao acertar)" class="skill-btn relative group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-purple-950/80 border border-purple-400/50 hover:border-fuchsia-300 active:scale-95 cursor-pointer">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="drop-shadow-[0_0_6px_#e879f9]">
+            <circle cx="12" cy="12" r="7" fill="url(#orbGrad)" stroke="#f5d0fe" stroke-width="1.3"/>
+            <path d="M7 12c0-2.8 2.2-5 5-5" stroke="#ffffff" stroke-width="1.4" stroke-linecap="round"/>
+            <defs><radialGradient id="orbGrad"><stop offset="0%" stop-color="#f5d0fe"/><stop offset="100%" stop-color="#9333ea"/></radialGradient></defs>
+          </svg>
+          <span class="text-[10px] font-bold text-purple-100 mt-0.5">Orbe</span>
+          <span class="text-[8px] text-cyan-300 font-semibold">+Mana</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-purple-300">LMB</span>
+        </button>
+
+        <!-- Poder 1 [1 / Q]: Nova Estelar -->
+        <button id="skill-nova" title="Explosão Nova Estelar (20 Mana)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-fuchsia-950/80 border border-fuchsia-400/50 hover:border-fuchsia-300 active:scale-95 cursor-pointer">
+          <div id="cd-nova-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#d946ef]">
+            <polygon points="12,2 14.8,9.2 22,12 14.8,14.8 12,22 9.2,14.8 2,12 9.2,9.2" fill="#f0abfc" stroke="#fdf4ff" stroke-width="1"/>
+            <circle cx="12" cy="12" r="2.5" fill="#fde047"/>
+          </svg>
+          <span class="text-[10px] font-bold text-fuchsia-100 mt-0.5 z-10">Nova</span>
+          <span class="text-[8px] text-cyan-300 font-semibold z-10">20 MP</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-fuchsia-300 z-10">1/Q</span>
+        </button>
+
+        <!-- Poder 2 [2 / R]: Chuva de Meteoros Cósmicos -->
+        <button id="skill-meteor" title="Chuva de Meteoros Cósmicos (35 Mana)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-violet-950/85 border border-amber-400/50 hover:border-amber-300 active:scale-95 cursor-pointer">
+          <div id="cd-meteor-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#f59e0b]">
+            <path d="M19 4L10 13" stroke="#fde047" stroke-width="2" stroke-linecap="round"/>
+            <path d="M21 9L14 16" stroke="#c084fc" stroke-width="1.6" stroke-linecap="round"/>
+            <circle cx="8.5" cy="15.5" r="4.5" fill="#f59e0b" stroke="#fef08a" stroke-width="1.2"/>
+          </svg>
+          <span class="text-[10px] font-bold text-amber-100 mt-0.5 z-10">Meteoros</span>
+          <span class="text-[8px] text-cyan-300 font-semibold z-10">35 MP</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-amber-300 z-10">2/R</span>
+        </button>
+
+        <!-- Poder 3 [3 / F]: Raio de Gelo Temporal -->
+        <button id="skill-frost" title="Raio de Gelo Temporal - Congela inimigos (25 Mana)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-indigo-950/85 border border-cyan-400/55 hover:border-cyan-200 active:scale-95 cursor-pointer">
+          <div id="cd-frost-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#38bdf8]">
+            <path d="M12 2v20M2 12h20M4.9 4.9l14.2 14.2M19.1 4.9L4.9 19.1" stroke="#67e8f9" stroke-width="1.8" stroke-linecap="round"/>
+            <circle cx="12" cy="12" r="2.5" fill="#e0f2fe"/>
+          </svg>
+          <span class="text-[10px] font-bold text-cyan-100 mt-0.5 z-10">Gelo</span>
+          <span class="text-[8px] text-cyan-300 font-semibold z-10">25 MP</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-cyan-300 z-10">3/F</span>
+        </button>
+
+        <!-- Poder 4 [4 / C]: Escudo Lunar & Forma Astral do Gato -->
+        <button id="skill-shield" title="Escudo Lunar + Forma Astral do Gato (40 Mana)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-indigo-950/85 border border-amber-300/60 hover:border-amber-200 active:scale-95 cursor-pointer">
+          <div id="cd-shield-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#fde047]">
+            <path d="M12 3l7 3v6c0 4.5-3 8.2-7 9.5-4-1.3-7-5-7-9.5V6l7-3z" fill="rgba(139,92,246,0.4)" stroke="#fde047" stroke-width="1.6"/>
+            <path d="M13.5 8.5a3.5 3.5 0 100 6 2.8 2.8 0 010-6z" fill="#fef08a"/>
+          </svg>
+          <span class="text-[10px] font-bold text-amber-100 mt-0.5 z-10">Lunar</span>
+          <span class="text-[8px] text-cyan-300 font-semibold z-10">40 MP</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-amber-300 z-10">4/C</span>
+        </button>
+
+        <!-- Companheiro [E / RMB]: Investida Sombria do Gato -->
+        <button id="skill-cat" title="Investida Sombria do Gato (Crítico em congelados!)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-purple-950/85 border border-amber-400/55 hover:border-amber-300 active:scale-95 cursor-pointer">
+          <div id="cd-cat-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#facc15]">
+            <ellipse cx="12" cy="15" rx="4.5" ry="3.5" fill="#fde047"/>
+            <circle cx="7" cy="10" r="1.8" fill="#fde047"/>
+            <circle cx="10.5" cy="7.5" r="1.8" fill="#fde047"/>
+            <circle cx="14.5" cy="7.5" r="1.8" fill="#fde047"/>
+            <circle cx="17.5" cy="10.5" r="1.8" fill="#fde047"/>
+          </svg>
+          <span class="text-[10px] font-bold text-amber-100 mt-0.5 z-10">Gato</span>
+          <span class="text-[8px] text-amber-300 font-semibold z-10">Crítico</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-amber-300 z-10">E/RMB</span>
+        </button>
+
+        <!-- Mobilidade [Shift]: Passo Etéreo -->
+        <button id="skill-dash" title="Passo Etéreo (Teleporte rápido)" class="skill-btn relative overflow-hidden group flex flex-col items-center justify-center w-14 h-15 sm:w-16 sm:h-16 px-1.5 rounded-xl bg-indigo-950/85 border border-purple-400/55 hover:border-cyan-300 active:scale-95 cursor-pointer">
+          <div id="cd-dash-overlay" class="absolute inset-0 bg-black/75 origin-bottom transition-transform duration-75" style="transform: scaleY(0);"></div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" class="z-10 drop-shadow-[0_0_6px_#c084fc]">
+            <path d="M4 12h12m0 0l-4-4m4 4l-4 4" stroke="#e9d5ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="19" cy="7" r="1.5" fill="#fde047"/>
+            <circle cx="19" cy="17" r="1.2" fill="#67e8f9"/>
+          </svg>
+          <span class="text-[10px] font-bold text-purple-100 mt-0.5 z-10">Dash</span>
+          <span class="text-[8px] text-cyan-300 font-semibold z-10">Esquiva</span>
+          <span class="absolute top-1 right-1 text-[8px] bg-black/70 px-1 rounded text-purple-300 z-10">Shift</span>
+        </button>
+
+        <!-- Pular (Touch) -->
+        <button id="skill-jump" class="sm:hidden relative flex flex-col items-center justify-center w-14 h-15 px-1.5 rounded-xl bg-slate-900/85 border border-purple-400/45 active:scale-95">
+          <span class="text-lg text-purple-200">↑</span>
+          <span class="text-[10px] font-bold text-indigo-200 mt-0.5">Pular</span>
+        </button>
+      </div>
+
+      <!-- Dica rápida de controles -->
+      <div class="hidden md:flex items-center gap-3 text-[11px] text-purple-200/90 bg-indigo-950/60 backdrop-blur-md px-4 py-1 rounded-full border border-purple-400/25">
+        <span><b>WASD:</b> Mover pela câmera</span>
+        <span class="text-amber-300">✦</span>
+        <span><b>Mouse / Arrastar:</b> Mirar 360°</span>
+        <span class="text-amber-300">✦</span>
+        <span><b>Combo:</b> Congele com <b>[3] Gelo</b> e estilhace com <b>[E] Gato</b>!</span>
+        <span class="text-amber-300">✦</span>
+        <span><b>Relíquias &amp; Golens:</b> +Tempo</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Joystick Virtual para Dispositivos Touch -->
+  <div id="mobile-joystick-zone" class="hidden fixed bottom-24 left-5 w-28 h-28 rounded-full bg-purple-900/25 border border-purple-400/35 z-20 touch-none flex items-center justify-center">
+    <div id="mobile-joystick-knob" class="w-11 h-11 rounded-full bg-purple-400/65 border border-amber-200/60 shadow-lg pointer-events-none"></div>
+  </div>
+
+  <!-- Tela Inicial (Menu Principal Aprimorado) -->
+  <div id="start-screen" class="fixed inset-0 z-30 flex items-center justify-center p-4 bg-gradient-to-b from-[#0b0618]/65 via-[#150a2c]/60 to-[#090412]/80 backdrop-blur-[3px] overflow-y-auto">
+    <div class="glass-panel glass-gold-border modal-reveal max-w-3xl w-full rounded-3xl p-5 sm:p-8 text-center relative overflow-hidden my-auto">
+      <!-- Brilhos atmosféricos de fundo -->
+      <div class="absolute -top-28 left-1/2 -translate-x-1/2 w-[28rem] h-[28rem] bg-purple-600/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-24 -right-16 w-64 h-64 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Barra Superior do Menu: Edição & Recorde Arcano -->
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-3 relative z-10">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-indigo-950/85 border border-purple-400/35 text-[11px] font-semibold text-purple-200">
+          <span class="text-amber-300">✦</span> Floresta do Eclipse 3D
+        </div>
+        <div class="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-indigo-950/85 border border-amber-300/45 text-xs font-bold text-amber-200 shadow-[0_0_12px_rgba(250,204,21,0.18)]">
+          <span>★</span> Recorde Arcano: <span id="best-score-display" class="text-amber-300 font-black">0</span>
+        </div>
+      </div>
+
+      <!-- Emblema Lunar & Chapéu da Bruxa SVG -->
+      <div class="flex justify-center mb-2 relative z-10 crest-float">
+        <svg width="74" height="74" viewBox="0 0 80 80" fill="none" class="drop-shadow-[0_0_16px_rgba(217,70,239,0.65)]">
+          <circle cx="40" cy="40" r="34" stroke="url(#crestRing)" stroke-width="1.5" stroke-dasharray="5 3"/>
+          <circle cx="40" cy="40" r="27" stroke="#fde047" stroke-opacity="0.45" stroke-width="1"/>
+          <!-- Lua Crescente Dourada -->
+          <path d="M47 16C34 18 25 29 25 42C25 55 35 65 48 66C38 62 32 52 32 41C32 30 38 20 47 16Z" fill="url(#moonCrestGrad)"/>
+          <!-- Estrela Arcana -->
+          <polygon points="52,26 54.2,31.8 60,34 54.2,36.2 52,42 49.8,36.2 44,34 49.8,31.8" fill="#fef08a"/>
+          <circle cx="44" cy="49" r="2" fill="#e879f9"/>
+          <circle cx="55" cy="47" r="1.5" fill="#67e8f9"/>
+          <defs>
+            <linearGradient id="crestRing" x1="6" y1="6" x2="74" y2="74">
+              <stop offset="0%" stop-color="#e879f9"/>
+              <stop offset="50%" stop-color="#fde047"/>
+              <stop offset="100%" stop-color="#a855f7"/>
+            </linearGradient>
+            <linearGradient id="moonCrestGrad" x1="25" y1="16" x2="48" y2="66">
+              <stop offset="0%" stop-color="#fef08a"/>
+              <stop offset="100%" stop-color="#f59e0b"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+
+      <h1 class="font-magic text-2xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-200 via-fuchsia-200 to-amber-200 glow-title leading-tight mb-2 relative z-10">
+        Crônicas da Bruxa Roxa &amp; O Gato Sombrio
+      </h1>
+
+      <!-- Abas de Navegação do Menu: Aventura vs Grimório -->
+      <div class="inline-flex p-1 rounded-2xl bg-indigo-950/85 border border-purple-400/30 mb-4 relative z-10">
+        <button id="tab-adventure" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-purple-700/85 text-amber-200 border border-amber-300/40 shadow transition cursor-pointer">
+          ✦ Iniciar Jornada
+        </button>
+        <button id="tab-grimoire" class="px-4 py-1.5 rounded-xl text-xs font-bold text-purple-200 hover:text-white transition cursor-pointer">
+          📖 Grimório &amp; Controles
+        </button>
+      </div>
+
+      <!-- Painel 1: Seleção de Dificuldade & Resumo da Missão -->
+      <div id="menu-panel-adventure" class="relative z-10">
+        <p class="text-xs sm:text-sm text-purple-100/90 max-w-xl mx-auto mb-5 leading-relaxed">
+          Resista às hordas sombrias até o fim do <b>Eclipse Lunar (03:00)</b>, colete <b>Relíquias Temporais</b> e lute em sinergia com seu <b>Gato Preto</b>!
+        </p>
+
+        <!-- Seletor de Dificuldade Arcana -->
+        <div class="max-w-lg mx-auto mb-6">
+          <div class="text-[11px] uppercase tracking-widest text-amber-300/90 font-bold mb-2">
+            Escolha o Grau de Feitiçaria
+          </div>
+          <div class="grid grid-cols-3 gap-2.5">
+            <button type="button" data-diff="apprentice" class="diff-pill rounded-2xl p-2.5 bg-indigo-950/70 border border-purple-400/30 text-purple-200 cursor-pointer text-center">
+              <div class="text-xs sm:text-sm font-bold">Aprendiz</div>
+              <div class="text-[10px] text-emerald-300 font-semibold mt-0.5">+25% Vida • 0.8x Pts</div>
+            </button>
+            <button type="button" data-diff="witch" class="diff-pill active rounded-2xl p-2.5 bg-indigo-950/70 border border-purple-400/30 text-purple-200 cursor-pointer text-center">
+              <div class="text-xs sm:text-sm font-bold">Feiticeira</div>
+              <div class="text-[10px] text-amber-300 font-semibold mt-0.5">Equilibrado • 1.0x Pts</div>
+            </button>
+            <button type="button" data-diff="archmage" class="diff-pill rounded-2xl p-2.5 bg-indigo-950/70 border border-purple-400/30 text-purple-200 cursor-pointer text-center">
+              <div class="text-xs sm:text-sm font-bold">Arquimaga</div>
+              <div class="text-[10px] text-rose-300 font-semibold mt-0.5">Hordas Rápidas • 1.5x Pts</div>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Painel 2: Grimório Completo de Poderes & Sinergias -->
+      <div id="menu-panel-grimoire" class="hidden relative z-10 mb-5">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-left">
+          <div class="bg-indigo-950/70 border border-purple-400/30 rounded-2xl p-3.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-cyan-300 mb-2">Câmera &amp; Movimento</div>
+            <ul class="text-xs space-y-1.5 text-purple-100">
+              <li><b>WASD / Setas:</b> Move pela direção da câmera.</li>
+              <li><b>Mouse / Arrastar:</b> Gira a câmera orbital 360°.</li>
+              <li><b>Scroll:</b> Aproxima ou afasta o zoom.</li>
+              <li><b>Espaço / Shift:</b> Pular e Passo Etéreo.</li>
+            </ul>
+          </div>
+
+          <div class="bg-indigo-950/70 border border-fuchsia-400/30 rounded-2xl p-3.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-fuchsia-300 mb-2">Feitiços da Bruxa</div>
+            <ul class="text-xs space-y-1.5 text-purple-100">
+              <li><b>[Clique Esq] Orbe:</b> Tiro rápido (+4 Mana).</li>
+              <li><b>[1 / Q] Nova Estelar:</b> Onda expansiva em área.</li>
+              <li><b>[2 / R] Meteoros:</b> 5 meteoros + fogo no chão.</li>
+              <li><b>[3 / F] Raio de Gelo:</b> Congela por 4s (+35% dano).</li>
+              <li><b>[4 / C] Escudo Lunar:</b> Cúpula + cura contínua.</li>
+            </ul>
+          </div>
+
+          <div class="bg-indigo-950/70 border border-amber-300/35 rounded-2xl p-3.5">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-300 mb-2">Gato Preto &amp; Tempo</div>
+            <ul class="text-xs space-y-1.5 text-purple-100">
+              <li><b>[E / Botão Dir]:</b> Investida Sombria (aplica <b>Crítico Estilhaçador</b> em congelados).</li>
+              <li><b>[4 / C] Forma Astral:</b> Dobra dano e velocidade do gato por 8s.</li>
+              <li><b>Miado Curativo:</b> Cura automaticamente quando a vida cai.</li>
+              <li><b>Relíquias &amp; Golens:</b> Concedem +15s a +20s!</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <button id="btn-start" class="btn-magic text-white font-bold text-base sm:text-lg px-10 py-3.5 rounded-2xl tracking-wide cursor-pointer relative z-10">
+        ✦ Iniciar Aventura Arcana ✦
+      </button>
+    </div>
+  </div>
+
+  <!-- Tela de Fim de Partida (Derrota / Vitória Temática Aprimorada) -->
+  <div id="gameover-screen" class="hidden fixed inset-0 z-30 flex items-center justify-center p-4 bg-[#070310]/85 backdrop-blur-md overflow-y-auto">
+    <div id="gameover-card" class="glass-panel glass-gold-border modal-reveal max-w-lg w-full rounded-3xl p-6 sm:p-8 text-center relative overflow-hidden my-auto">
+      <div id="end-glow-orb" class="absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-rose-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Emblema SVG Dinâmico de Derrota ou Vitória -->
+      <div id="end-crest-container" class="flex justify-center mb-3 relative z-10 crest-float"></div>
+
+      <div id="end-badge" class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10">
+        Crônica Encerrada
+      </div>
+
+      <h2 id="end-title" class="font-magic text-2xl sm:text-3xl font-black text-rose-300 mb-2 relative z-10">
+        A Magia se Dissipou...
+      </h2>
+      <p id="end-subtitle" class="text-xs sm:text-sm text-purple-200/90 mb-5 leading-relaxed relative z-10">
+        A névoa sombria envolveu a clareira antes do fim do eclipse, mas o seu gato sombrio permanece fiel ao seu lado aguardando o retorno.
+      </p>
+
+      <!-- Destaque de Pontuação Final + Recorde -->
+      <div class="bg-gradient-to-r from-indigo-950/90 via-purple-950/85 to-indigo-950/90 border border-amber-300/40 rounded-2xl p-3.5 mb-3.5 relative z-10">
+        <div class="flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest text-purple-300 font-bold">
+          Pontuação Arcana Final
+          <span id="new-record-badge" class="hidden px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-300 border border-amber-300/60 text-[10px]">★ Novo Recorde!</span>
+        </div>
+        <div id="final-score" class="font-magic text-3xl sm:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 via-purple-100 to-amber-200 mt-0.5">
+          0
+        </div>
+      </div>
+
+      <!-- Grade Detalhada de Estatísticas da Partida -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-indigo-950/65 border border-purple-400/25 rounded-2xl p-3 mb-6 relative z-10">
+        <div class="p-1.5 rounded-xl bg-black/25">
+          <div class="text-[10px] text-purple-300 uppercase font-bold">Tempo</div>
+          <div id="final-time" class="text-base sm:text-lg font-black text-emerald-300">00:00</div>
+        </div>
+        <div class="p-1.5 rounded-xl bg-black/25">
+          <div class="text-[10px] text-purple-300 uppercase font-bold">Onda</div>
+          <div id="final-wave" class="text-base sm:text-lg font-black text-amber-300">1</div>
+        </div>
+        <div class="p-1.5 rounded-xl bg-black/25">
+          <div class="text-[10px] text-purple-300 uppercase font-bold">Abates</div>
+          <div id="final-kills" class="text-base sm:text-lg font-black text-fuchsia-300">0</div>
+        </div>
+        <div class="p-1.5 rounded-xl bg-black/25">
+          <div class="text-[10px] text-purple-300 uppercase font-bold">Combos Gato</div>
+          <div id="final-combos" class="text-base sm:text-lg font-black text-cyan-300">0</div>
+        </div>
+      </div>
+
+      <!-- Botões de Ação: Jogar Novamente & Voltar ao Menu -->
+      <div class="flex flex-col sm:flex-row gap-2.5 relative z-10">
+        <button id="btn-restart" class="btn-magic text-white font-bold text-sm sm:text-base px-6 py-3.5 rounded-2xl flex-1 cursor-pointer">
+          ✦ Jogar Novamente
+        </button>
+        <button id="btn-back-menu" class="glass-panel hover:bg-purple-900/50 text-purple-200 hover:text-amber-200 font-bold text-sm sm:text-base px-5 py-3.5 rounded-2xl border border-purple-400/40 transition cursor-pointer">
+          Voltar ao Menu
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
+    import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
+    import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
+
+    /**
+     * ============================================================================
+     * CRÔNICAS DA BRUXA ROXA & O GATO SOMBRIO - EDIÇÃO VISUAL ARCANA
+     * ============================================================================
+     * Paleta de Cores Preservada:
+     * - Roxo Místico (#581c87, #7e22ce, #a855f7, #c084fc)
+     * - Violeta / Magenta Arcano (#d946ef, #e879f9)
+     * - Índigo Noturno (#0b0716, #130b2e, #1e1b4b)
+     * - Dourado Lunar / Estelar (#fde047, #facc15, #f59e0b)
+     * - Ciano Gelo (#38bdf8, #67e8f9, #7dd3fc)
+     * - Verde-Esmeralda dos Slimes (#10b981, #34d399, #064e3b)
+     */
+
+    // ============================================================================
+    // 1. GERADOR DE TEXTURAS PROCEDURAIS (RUNAS, SOLO, CÉU & NÉVOA)
+    // ============================================================================
+    const ProceduralTextures = {
+      createForestGroundTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Base índigo-roxo noturno
+        ctx.fillStyle = '#130d26';
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Manchas orgânicas de musgo violeta e pedras escuras
+        for (let i = 0; i < 900; i++) {
+          const x = Math.random() * 512;
+          const y = Math.random() * 512;
+          const r = 4 + Math.random() * 18;
+          ctx.fillStyle = i % 3 === 0
+            ? 'rgba(46, 16, 101, 0.28)'
+            : (i % 3 === 1 ? 'rgba(30, 27, 75, 0.32)' : 'rgba(15, 10, 32, 0.35)');
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Fios sutis de grama mística
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.16)';
+        ctx.lineWidth = 1.2;
+        for (let i = 0; i < 650; i++) {
+          const x = Math.random() * 512;
+          const y = Math.random() * 512;
+          ctx.beginPath();
+          ctx.moveTo(x, y);
+          ctx.lineTo(x + (Math.random() - 0.5) * 6, y - 5 - Math.random() * 6);
+          ctx.stroke();
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        tex.repeat.set(14, 14);
+        return tex;
+      },
+
+      createMagicCircleTexture(primaryColor = '#c084fc', secondaryColor = '#fde047') {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        const cx = 256, cy = 256;
+
+        ctx.clearRect(0, 0, 512, 512);
+
+        // Anéis concêntricos
+        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 232, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = secondaryColor;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 214, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = primaryColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 155, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Estrela octogonal sagrada inscrita
+        ctx.strokeStyle = secondaryColor;
+        ctx.lineWidth = 2;
+        for (let s = 0; s < 2; s++) {
+          ctx.beginPath();
+          for (let i = 0; i <= 4; i++) {
+            const angle = (i * Math.PI) / 2 + (s * Math.PI) / 4;
+            const x = cx + Math.cos(angle) * 212;
+            const y = cy + Math.sin(angle) * 212;
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        }
+
+        // Glifos rúnicos ao redor do anel externo
+        ctx.fillStyle = secondaryColor;
+        ctx.font = 'bold 20px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const glyphs = ['✦', '☽', '✧', '⚝', '◈', '✵', '☾', '✺', '✦', '☽', '✧', '⚝'];
+        glyphs.forEach((g, idx) => {
+          const a = (idx / glyphs.length) * Math.PI * 2;
+          ctx.save();
+          ctx.translate(cx + Math.cos(a) * 184, cy + Math.sin(a) * 184);
+          ctx.rotate(a + Math.PI / 2);
+          ctx.fillText(g, 0, 0);
+          ctx.restore();
+        });
+
+        return new THREE.CanvasTexture(canvas);
+      },
+
+      createSkyDomeTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+
+        // Gradiente vertical índigo-violeta profundo
+        const grad = ctx.createLinearGradient(0, 0, 0, 512);
+        grad.addColorStop(0.0, '#070412');
+        grad.addColorStop(0.35, '#13092b');
+        grad.addColorStop(0.68, '#26114d');
+        grad.addColorStop(0.88, '#3b176e');
+        grad.addColorStop(1.0, '#160b2e');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 512);
+
+        // Nebulosa roxa/violeta sutil no céu
+        for (let i = 0; i < 28; i++) {
+          const x = Math.random() * 512;
+          const y = 80 + Math.random() * 240;
+          const r = 35 + Math.random() * 85;
+          const nebGrad = ctx.createRadialGradient(x, y, 2, x, y, r);
+          nebGrad.addColorStop(0, i % 2 === 0 ? 'rgba(168, 85, 247, 0.14)' : 'rgba(217, 70, 239, 0.1)');
+          nebGrad.addColorStop(1, 'rgba(19, 9, 43, 0)');
+          ctx.fillStyle = nebGrad;
+          ctx.beginPath();
+          ctx.arc(x, y, r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        return new THREE.CanvasTexture(canvas);
+      },
+
+      createSoftGlowTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 128;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createRadialGradient(64, 64, 4, 64, 64, 62);
+        grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.4, 'rgba(216, 180, 254, 0.45)');
+        grad.addColorStop(1, 'rgba(88, 28, 135, 0)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 128, 128);
+        return new THREE.CanvasTexture(canvas);
+      }
+    };
+
+    // ============================================================================
+    // 2. SISTEMA DE ÁUDIO PROCEDURAL (WEB AUDIO API)
+    // ============================================================================
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.muted = false;
+      }
+
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            this.ctx = new AudioCtx();
+          }
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+
+      toggleMute() {
+        this.muted = !this.muted;
+        return this.muted;
+      }
+
+      playOrbCast() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(720, now);
+        osc.frequency.exponentialRampToValueAtTime(240, now + 0.16);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.17);
+      }
+
+      playNovaBlast() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(210, now);
+        osc.frequency.exponentialRampToValueAtTime(36, now + 0.55);
+        gain.gain.setValueAtTime(0.32, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.55);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.56);
+      }
+
+      playMeteorImpact() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(140, now);
+        osc.frequency.exponentialRampToValueAtTime(32, now + 0.42);
+        gain.gain.setValueAtTime(0.24, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.43);
+      }
+
+      playFrostCast() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [1180, 1560, 2090].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + i * 0.04);
+          osc.frequency.exponentialRampToValueAtTime(freq * 0.75, now + i * 0.04 + 0.25);
+          gain.gain.setValueAtTime(0.11, now + i * 0.04);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.04 + 0.25);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.04);
+          osc.stop(now + i * 0.04 + 0.26);
+        });
+      }
+
+      playLunarShield() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        [440, 554.37, 659.25, 880].forEach((freq, i) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + i * 0.06);
+          gain.gain.setValueAtTime(0.12, now + i * 0.06);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.06 + 0.45);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + i * 0.06);
+          osc.stop(now + i * 0.06 + 0.46);
+        });
+      }
+
+      playDash() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.exponentialRampToValueAtTime(920, now + 0.22);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.23);
+      }
+
+      playCatMeow(isHeal = false) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        if (isHeal) {
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.linearRampToValueAtTime(780, now + 0.14);
+          osc.frequency.exponentialRampToValueAtTime(600, now + 0.36);
+        } else {
+          osc.frequency.setValueAtTime(640, now);
+          osc.frequency.linearRampToValueAtTime(880, now + 0.1);
+          osc.frequency.exponentialRampToValueAtTime(420, now + 0.3);
+        }
+        gain.gain.setValueAtTime(0.01, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.06);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.36);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.37);
+      }
+
+      playCrystalPickup(isTimeRelic = false) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = isTimeRelic ? [587.33, 880, 1174.66, 1760] : [784, 1046.5, 1318.5];
+        notes.forEach((freq, idx) => {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.055);
+          gain.gain.setValueAtTime(0.12, now + idx * 0.055);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.055 + 0.24);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + idx * 0.055);
+          osc.stop(now + idx * 0.055 + 0.25);
+        });
+      }
+
+      playEnemyHit(killed = false) {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = killed ? 'sawtooth' : 'square';
+        osc.frequency.setValueAtTime(killed ? 175 : 245, now);
+        osc.frequency.exponentialRampToValueAtTime(killed ? 45 : 110, now + (killed ? 0.28 : 0.1));
+        gain.gain.setValueAtTime(killed ? 0.15 : 0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + (killed ? 0.28 : 0.1));
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + (killed ? 0.29 : 0.11));
+      }
+
+      playPlayerHurt() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(150, now);
+        osc.frequency.linearRampToValueAtTime(75, now + 0.25);
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.26);
+      }
+
+      playTimerTick() {
+        if (this.muted || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(980, now);
+        gain.gain.setValueAtTime(0.07, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.08);
+      }
+    }
+
+    // ============================================================================
+    // 3. CONSTRUTOR DE PERSONAGENS E CRIATURAS 3D DETALHADOS
+    // ============================================================================
+    const CharacterFactory = {
+      // Bruxa Roxa Estilizada com Capa Segmentada, Chapéu Articulado, Cajado Rúnico e Aura nos Pés
+      createWitch(magicCircleTex) {
+        const root = new THREE.Group();
+
+        const matRobe = new THREE.MeshStandardMaterial({
+          color: 0x581c87,
+          roughness: 0.48,
+          metalness: 0.12
+        });
+        const matRobeDeep = new THREE.MeshStandardMaterial({
+          color: 0x3b0764,
+          roughness: 0.58,
+          metalness: 0.1
+        });
+        const matVioletTrim = new THREE.MeshStandardMaterial({
+          color: 0xc084fc,
+          emissive: 0x6b21a8,
+          emissiveIntensity: 0.5,
+          roughness: 0.3
+        });
+        const matGold = new THREE.MeshStandardMaterial({
+          color: 0xfde047,
+          emissive: 0xd97706,
+          emissiveIntensity: 0.45,
+          roughness: 0.25,
+          metalness: 0.75
+        });
+        const matSkin = new THREE.MeshStandardMaterial({
+          color: 0xfde6d8,
+          roughness: 0.55
+        });
+        const matHair = new THREE.MeshStandardMaterial({
+          color: 0x1e1035,
+          roughness: 0.65
+        });
+
+        // Aura rúnica giratória sob os pés da bruxa
+        const footAura = new THREE.Mesh(
+          new THREE.PlaneGeometry(2.1, 2.1),
+          new THREE.MeshBasicMaterial({
+            map: magicCircleTex,
+            transparent: true,
+            opacity: 0.55,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          })
+        );
+        footAura.rotation.x = -Math.PI / 2;
+        footAura.position.y = 0.04;
+        root.add(footAura);
+
+        // Vestido em camadas estilizadas (saia rodada + corpete + babado inferior)
+        const skirtLower = new THREE.Mesh(new THREE.ConeGeometry(0.76, 1.15, 24), matRobe);
+        skirtLower.position.y = 0.58;
+        skirtLower.castShadow = true;
+        skirtLower.receiveShadow = true;
+        root.add(skirtLower);
+
+        const skirtTrim = new THREE.Mesh(new THREE.TorusGeometry(0.75, 0.032, 8, 28), matVioletTrim);
+        skirtTrim.rotation.x = Math.PI / 2;
+        skirtTrim.position.y = 0.05;
+        root.add(skirtTrim);
+
+        const bodice = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.38, 0.58, 18), matRobeDeep);
+        bodice.position.y = 1.25;
+        bodice.castShadow = true;
+        root.add(bodice);
+
+        // Cinto roxo com fivela dourada lunar
+        const belt = new THREE.Mesh(new THREE.TorusGeometry(0.36, 0.045, 10, 24), matVioletTrim);
+        belt.rotation.x = Math.PI / 2;
+        belt.position.y = 1.04;
+        root.add(belt);
+
+        const buckle = new THREE.Mesh(new THREE.OctahedronGeometry(0.09, 0), matGold);
+        buckle.position.set(0, 1.04, 0.37);
+        root.add(buckle);
+
+        // Capa fluida articulada em múltiplos segmentos
+        const capeGroup = new THREE.Group();
+        capeGroup.position.set(0, 1.48, -0.16);
+
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.31, 0.065, 10, 20, Math.PI * 1.4), matRobeDeep);
+        collar.rotation.x = Math.PI / 2.2;
+        collar.rotation.z = -Math.PI * 0.2;
+        capeGroup.add(collar);
+
+        const capeSeg1 = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.65, 0.07), matRobeDeep);
+        capeSeg1.position.set(0, -0.32, -0.05);
+        capeSeg1.rotation.x = 0.16;
+        capeSeg1.castShadow = true;
+        capeGroup.add(capeSeg1);
+
+        const capeSeg2Pivot = new THREE.Group();
+        capeSeg2Pivot.position.set(0, -0.62, -0.1);
+        const capeSeg2 = new THREE.Mesh(new THREE.BoxGeometry(0.96, 0.68, 0.06), matRobe);
+        capeSeg2.position.set(0, -0.32, -0.03);
+        capeSeg2.rotation.x = 0.12;
+        capeSeg2.castShadow = true;
+        capeSeg2Pivot.add(capeSeg2);
+        capeGroup.add(capeSeg2Pivot);
+
+        root.add(capeGroup);
+
+        // Cabeça e Cabelos Esvoaçantes
+        const headGroup = new THREE.Group();
+        headGroup.position.y = 1.74;
+
+        const head = new THREE.Mesh(new THREE.SphereGeometry(0.31, 20, 20), matSkin);
+        head.castShadow = true;
+        headGroup.add(head);
+
+        const hairBack = new THREE.Mesh(new THREE.SphereGeometry(0.34, 18, 18), matHair);
+        hairBack.position.set(0, 0.02, -0.07);
+        headGroup.add(hairBack);
+
+        // Mechas de cabelo laterais
+        const hairLockL = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.65, 10), matHair);
+        hairLockL.position.set(-0.26, -0.22, 0.06);
+        hairLockL.rotation.set(0.1, 0, -0.18);
+        const hairLockR = hairLockL.clone();
+        hairLockR.position.x = 0.26;
+        hairLockR.rotation.z = 0.18;
+        headGroup.add(hairLockL, hairLockR);
+
+        // Olhos violeta-luminosos expressivos
+        const eyeMat = new THREE.MeshBasicMaterial({ color: 0xf0abfc });
+        const leftEye = new THREE.Mesh(new THREE.SphereGeometry(0.048, 10, 10), eyeMat);
+        leftEye.position.set(-0.11, 0.03, 0.28);
+        const rightEye = leftEye.clone();
+        rightEye.position.x = 0.11;
+        headGroup.add(leftEye, rightEye);
+
+        // Chapéu de Bruxa Pontudo Articulado com Aba Curva e Ponta Dobrada
+        const hatGroup = new THREE.Group();
+        hatGroup.position.y = 0.23;
+
+        const hatBrim = new THREE.Mesh(new THREE.CylinderGeometry(0.78, 0.82, 0.055, 28), matRobe);
+        hatBrim.castShadow = true;
+        hatGroup.add(hatBrim);
+
+        const hatBand = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.39, 0.11, 22), matVioletTrim);
+        hatBand.position.y = 0.06;
+        hatGroup.add(hatBand);
+
+        const hatGoldClasp = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.13, 0.06), matGold);
+        hatGoldClasp.position.set(0, 0.06, 0.38);
+        hatGroup.add(hatGoldClasp);
+
+        const hatBaseCone = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.58, 22), matRobe);
+        hatBaseCone.position.set(0, 0.34, -0.02);
+        hatBaseCone.rotation.x = -0.1;
+        hatBaseCone.castShadow = true;
+        hatGroup.add(hatBaseCone);
+
+        const hatTipPivot = new THREE.Group();
+        hatTipPivot.position.set(0, 0.58, -0.06);
+        const hatTipCone = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.52, 18), matRobeDeep);
+        hatTipCone.position.set(0, 0.2, -0.12);
+        hatTipCone.rotation.x = -0.58;
+        hatTipCone.castShadow = true;
+        hatTipPivot.add(hatTipCone);
+        hatGroup.add(hatTipPivot);
+
+        headGroup.add(hatGroup);
+        root.add(headGroup);
+
+        // Braço Esquerdo
+        const leftArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.65, 12), matRobe);
+        leftArm.position.set(-0.46, 1.24, 0.05);
+        leftArm.rotation.z = 0.35;
+        root.add(leftArm);
+
+        // Cajado Arcano Ornamentado com Garras Douradas, Cristal Flutuante e Anel Rúnico
+        const staffPivot = new THREE.Group();
+        staffPivot.position.set(0.52, 1.25, 0.15);
+
+        const rightArm = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.09, 0.62, 12), matRobe);
+        rightArm.position.set(-0.04, -0.05, 0);
+        rightArm.rotation.z = -0.35;
+        staffPivot.add(rightArm);
+
+        const staffWood = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.038, 0.052, 2.15, 12),
+          new THREE.MeshStandardMaterial({ color: 0x2e1065, roughness: 0.45, metalness: 0.2 })
+        );
+        staffWood.position.set(0.12, -0.12, 0.2);
+        staffWood.rotation.x = 0.15;
+        staffWood.castShadow = true;
+        staffPivot.add(staffWood);
+
+        // Coroa/Garras douradas na ponta do cajado
+        const crownSocket = new THREE.Mesh(new THREE.TorusGeometry(0.14, 0.025, 8, 16), matGold);
+        crownSocket.position.set(0.12, 0.86, 0.34);
+        crownSocket.rotation.x = Math.PI / 2;
+        staffPivot.add(crownSocket);
+
+        for (let g = 0; g < 3; g++) {
+          const ga = (g / 3) * Math.PI * 2;
+          const claw = new THREE.Mesh(new THREE.ConeGeometry(0.025, 0.24, 6), matGold);
+          claw.position.set(0.12 + Math.cos(ga) * 0.14, 0.96, 0.34 + Math.sin(ga) * 0.14);
+          claw.rotation.z = -Math.cos(ga) * 0.25;
+          claw.rotation.x = Math.sin(ga) * 0.25;
+          staffPivot.add(claw);
+        }
+
+        // Cristal Arcano Flutuante + Anel Rúnico Giratório
+        const orbMesh = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.19, 0),
+          new THREE.MeshBasicMaterial({ color: 0xf5d0fe })
+        );
+        orbMesh.position.set(0.12, 1.05, 0.37);
+        staffPivot.add(orbMesh);
+
+        const staffRuneRing = new THREE.Mesh(
+          new THREE.TorusGeometry(0.28, 0.016, 8, 24),
+          new THREE.MeshBasicMaterial({ color: 0xfde047 })
+        );
+        staffRuneRing.position.copy(orbMesh.position);
+        staffPivot.add(staffRuneRing);
+
+        const staffLight = new THREE.PointLight(0xd946ef, 1.45, 10);
+        staffLight.position.copy(orbMesh.position);
+        staffPivot.add(staffLight);
+
+        root.add(staffPivot);
+
+        // Cúpula do Escudo Lunar Hexagonal/Rúnica Translúcida
+        const shieldGroup = new THREE.Group();
+        shieldGroup.visible = false;
+        const shieldDome = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(1.72, 2),
+          new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.22,
+            wireframe: true
+          })
+        );
+        shieldDome.position.y = 1.15;
+
+        const shieldInnerSphere = new THREE.Mesh(
+          new THREE.SphereGeometry(1.68, 24, 18),
+          new THREE.MeshBasicMaterial({
+            color: 0x7e22ce,
+            transparent: true,
+            opacity: 0.14
+          })
+        );
+        shieldInnerSphere.position.y = 1.15;
+
+        const shieldRing = new THREE.Mesh(
+          new THREE.TorusGeometry(1.74, 0.045, 8, 40),
+          new THREE.MeshBasicMaterial({ color: 0xfde047 })
+        );
+        shieldRing.rotation.x = Math.PI / 2;
+        shieldRing.position.y = 1.05;
+        shieldGroup.add(shieldDome, shieldInnerSphere, shieldRing);
+        root.add(shieldGroup);
+
+        return {
+          root,
+          footAura,
+          headGroup,
+          hatGroup,
+          hatTipPivot,
+          capeGroup,
+          capeSeg2Pivot,
+          staffPivot,
+          orbMesh,
+          staffRuneRing,
+          staffLight,
+          shieldGroup,
+          shieldRing
+        };
+      },
+
+      // Gato Preto Companheiro Detalhado com Cauda Multi-Segmentada, Pingente Lunar e Forma Astral
+      createBlackCat() {
+        const root = new THREE.Group();
+
+        const matFur = new THREE.MeshStandardMaterial({
+          color: 0x110d1b,
+          emissive: 0x000000,
+          emissiveIntensity: 0,
+          roughness: 0.42,
+          metalness: 0.15
+        });
+        const matInnerEar = new THREE.MeshBasicMaterial({ color: 0xa855f7 });
+        const matEye = new THREE.MeshBasicMaterial({ color: 0xfacc15 });
+        const matCollar = new THREE.MeshStandardMaterial({
+          color: 0x7e22ce,
+          emissive: 0x6b21a8,
+          emissiveIntensity: 0.5
+        });
+        const matPendant = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+
+        // Corpo felino esguio
+        const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.21, 0.64, 14), matFur);
+        torso.rotation.x = Math.PI / 2;
+        torso.position.y = 0.36;
+        torso.castShadow = true;
+        root.add(torso);
+
+        const chest = new THREE.Mesh(new THREE.SphereGeometry(0.21, 14, 14), matFur);
+        chest.position.set(0, 0.38, 0.25);
+        chest.castShadow = true;
+        root.add(chest);
+
+        const rear = new THREE.Mesh(new THREE.SphereGeometry(0.2, 14, 14), matFur);
+        rear.position.set(0, 0.36, -0.26);
+        rear.castShadow = true;
+        root.add(rear);
+
+        // Cabeça Expressiva
+        const head = new THREE.Group();
+        head.position.set(0, 0.6, 0.36);
+
+        const skull = new THREE.Mesh(new THREE.SphereGeometry(0.22, 16, 16), matFur);
+        skull.scale.set(1.05, 0.95, 1.0);
+        skull.castShadow = true;
+        head.add(skull);
+
+        // Orelhas pontudas com interior violeta
+        const earGeo = new THREE.ConeGeometry(0.085, 0.22, 4);
+        const earInGeo = new THREE.ConeGeometry(0.045, 0.15, 4);
+
+        const earL = new THREE.Mesh(earGeo, matFur);
+        earL.position.set(-0.12, 0.22, 0);
+        earL.rotation.z = 0.18;
+        const earInL = new THREE.Mesh(earInGeo, matInnerEar);
+        earInL.position.set(-0.12, 0.21, 0.02);
+        earInL.rotation.z = 0.18;
+
+        const earR = new THREE.Mesh(earGeo, matFur);
+        earR.position.set(0.12, 0.22, 0);
+        earR.rotation.z = -0.18;
+        const earInR = new THREE.Mesh(earInGeo, matInnerEar);
+        earInR.position.set(0.12, 0.21, 0.02);
+        earInR.rotation.z = -0.18;
+
+        head.add(earL, earInL, earR, earInR);
+
+        // Olhos grandes dourado-esmeralda brilhantes
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.046, 10, 10), matEye);
+        eyeL.position.set(-0.085, 0.03, 0.18);
+        const eyeR = eyeL.clone();
+        eyeR.position.x = 0.085;
+        head.add(eyeL, eyeR);
+
+        // Bigodes sutis
+        const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xd8b4fe });
+        for (let side of [-1, 1]) {
+          for (let row of [-0.02, 0.02]) {
+            const whisker = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.008, 0.008), whiskerMat);
+            whisker.position.set(side * 0.18, -0.03 + row, 0.17);
+            whisker.rotation.z = side * row * 4;
+            head.add(whisker);
+          }
+        }
+
+        // Coleira roxa com pingente de lua dourada
+        const collar = new THREE.Mesh(new THREE.TorusGeometry(0.17, 0.028, 8, 18), matCollar);
+        collar.rotation.x = Math.PI / 2;
+        collar.position.set(0, -0.16, -0.04);
+        head.add(collar);
+
+        const pendant = new THREE.Mesh(new THREE.OctahedronGeometry(0.048, 0), matPendant);
+        pendant.position.set(0, -0.18, 0.14);
+        head.add(pendant);
+
+        root.add(head);
+
+        // 4 Patas articuladas
+        const legGeo = new THREE.CylinderGeometry(0.045, 0.04, 0.26, 8);
+        const legs = [];
+        [
+          [-0.12, 0.13, 0.22],
+          [0.12, 0.13, 0.22],
+          [-0.12, 0.13, -0.22],
+          [0.12, 0.13, -0.22]
+        ].forEach(pos => {
+          const leg = new THREE.Mesh(legGeo, matFur);
+          leg.position.set(...pos);
+          leg.castShadow = true;
+          root.add(leg);
+          legs.push(leg);
+        });
+
+        // Cauda longa articulada em 3 segmentos
+        const tailSegments = [];
+        let parentTail = root;
+        for (let s = 0; s < 3; s++) {
+          const segPivot = new THREE.Group();
+          if (s === 0) {
+            segPivot.position.set(0, 0.44, -0.36);
+          } else {
+            segPivot.position.set(0, 0.22, -0.04);
+          }
+          const segMesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.024 - s * 0.004, 0.032 - s * 0.004, 0.24, 8),
+            matFur
+          );
+          segMesh.position.set(0, 0.11, -0.02);
+          segMesh.rotation.x = -0.35;
+          segPivot.add(segMesh);
+          parentTail.add(segPivot);
+          tailSegments.push(segPivot);
+          parentTail = segPivot;
+        }
+
+        // Constelações internas (visíveis na Forma Astral)
+        const astralStars = new THREE.Group();
+        astralStars.visible = false;
+        const starOrbMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        for (let i = 0; i < 6; i++) {
+          const st = new THREE.Mesh(new THREE.OctahedronGeometry(0.04, 0), starOrbMat);
+          st.position.set(
+            Math.cos(i * 1.1) * 0.26,
+            0.35 + (i % 3) * 0.14,
+            Math.sin(i * 1.1) * 0.34
+          );
+          astralStars.add(st);
+        }
+        root.add(astralStars);
+
+        const catLight = new THREE.PointLight(0xa855f7, 0.85, 5.5);
+        catLight.position.set(0, 0.65, 0);
+        root.add(catLight);
+
+        return { root, head, legs, tailSegments, astralStars, catLight, matFur };
+      },
+
+      // Monstros Detalhados: Slimes Esmeralda/Roxo Gelatinosos, Morcegos Arcanos e Golem de Obsidiana
+      createEnemy(type = 'slime') {
+        const root = new THREE.Group();
+        let data;
+
+        if (type === 'slime') {
+          // Slime Sombrio & Verde-Esmeralda Translúcido com Núcleo Pulsante e Bolhas
+          const outerMat = new THREE.MeshStandardMaterial({
+            color: 0x064e3b,
+            emissive: 0x10b981,
+            emissiveIntensity: 0.42,
+            roughness: 0.15,
+            metalness: 0.05,
+            transparent: true,
+            opacity: 0.82
+          });
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.66, 20, 16), outerMat);
+          body.scale.set(1.12, 0.86, 1.12);
+          body.position.y = 0.55;
+          body.castShadow = true;
+          root.add(body);
+
+          // Núcleo mágico pulsante interno
+          const core = new THREE.Mesh(
+            new THREE.OctahedronGeometry(0.24, 1),
+            new THREE.MeshBasicMaterial({ color: 0x34d399 })
+          );
+          core.position.y = 0.54;
+          root.add(core);
+
+          // Espinhos de cristal roxo-escuro no topo
+          const spikeMat = new THREE.MeshStandardMaterial({
+            color: 0x3b0764,
+            emissive: 0x7e22ce,
+            emissiveIntensity: 0.4,
+            roughness: 0.3
+          });
+          for (let i = 0; i < 4; i++) {
+            const spike = new THREE.Mesh(new THREE.ConeGeometry(0.11, 0.34, 6), spikeMat);
+            const angle = (i / 4) * Math.PI * 2 + 0.4;
+            spike.position.set(Math.cos(angle) * 0.28, 1.05, Math.sin(angle) * 0.28);
+            spike.rotation.z = -Math.cos(angle) * 0.32;
+            spike.rotation.x = Math.sin(angle) * 0.32;
+            root.add(spike);
+          }
+
+          // Olhos dourados brilhantes
+          const eyeMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+          const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.085, 8, 8), eyeMat);
+          eyeL.position.set(-0.22, 0.62, 0.58);
+          const eyeR = eyeL.clone();
+          eyeR.position.x = 0.22;
+          root.add(eyeL, eyeR);
+
+          data = { root, body, core, radius: 0.72, height: 1.2 };
+        } else if (type === 'bat') {
+          // Morcego Arcano com Orelhas Grandes, Presas e Asas Articuladas
+          const bodyMat = new THREE.MeshStandardMaterial({
+            color: 0x2e1065,
+            emissive: 0x581c87,
+            emissiveIntensity: 0.45,
+            roughness: 0.45
+          });
+          const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 16, 14), bodyMat);
+          body.scale.set(0.95, 1.15, 0.9);
+          body.position.y = 1.48;
+          body.castShadow = true;
+          root.add(body);
+
+          // Orelhas pontudas do morcego
+          const earGeo = new THREE.ConeGeometry(0.11, 0.32, 5);
+          const earL = new THREE.Mesh(earGeo, bodyMat);
+          earL.position.set(-0.2, 1.95, 0.05);
+          earL.rotation.z = 0.25;
+          const earR = earL.clone();
+          earR.position.x = 0.2;
+          earR.rotation.z = -0.25;
+          root.add(earL, earR);
+
+          // Asas membranosas articuladas com borda violeta luminosa
+          const wingMat = new THREE.MeshStandardMaterial({
+            color: 0x4c1d95,
+            emissive: 0x9333ea,
+            emissiveIntensity: 0.35,
+            side: THREE.DoubleSide,
+            roughness: 0.4
+          });
+          const wingPivotL = new THREE.Group();
+          wingPivotL.position.set(-0.28, 1.55, 0);
+          const wingMeshL = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.48), wingMat);
+          wingMeshL.position.set(-0.46, 0, 0);
+          wingPivotL.add(wingMeshL);
+
+          const wingPivotR = new THREE.Group();
+          wingPivotR.position.set(0.28, 1.55, 0);
+          const wingMeshR = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.04, 0.48), wingMat);
+          wingMeshR.position.set(0.46, 0, 0);
+          wingPivotR.add(wingMeshR);
+          root.add(wingPivotL, wingPivotR);
+
+          // Olhos magenta-brilhantes e presas
+          const eyeMat = new THREE.MeshBasicMaterial({ color: 0xf0abfc });
+          const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.075, 8, 8), eyeMat);
+          eyeL.position.set(-0.15, 1.56, 0.35);
+          const eyeR = eyeL.clone();
+          eyeR.position.x = 0.15;
+          root.add(eyeL, eyeR);
+
+          const fangMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+          const fangL = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.11, 5), fangMat);
+          fangL.position.set(-0.08, 1.36, 0.37);
+          fangL.rotation.x = Math.PI;
+          const fangR = fangL.clone();
+          fangR.position.x = 0.08;
+          root.add(fangL, fangR);
+
+          data = { root, body, wingL: wingPivotL, wingR: wingPivotR, radius: 0.72, height: 1.85 };
+        } else {
+          // Chefão: Golem das Trevas com Obsidiana Roxa, Veias Douradas/Violeta, Ombros Flutuantes e Núcleo
+          const obsidianMat = new THREE.MeshStandardMaterial({
+            color: 0x160d29,
+            emissive: 0x4c1d95,
+            emissiveIntensity: 0.32,
+            roughness: 0.55,
+            metalness: 0.35
+          });
+          const veinMat = new THREE.MeshBasicMaterial({ color: 0xd946ef });
+          const goldRuneMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+
+          const torso = new THREE.Mesh(new THREE.DodecahedronGeometry(1.22, 0), obsidianMat);
+          torso.position.y = 1.58;
+          torso.castShadow = true;
+          root.add(torso);
+
+          // Núcleo exposto pulsante no peito
+          const core = new THREE.Mesh(new THREE.OctahedronGeometry(0.42, 0), goldRuneMat);
+          core.position.set(0, 1.65, 0.92);
+          root.add(core);
+
+          // Veias rúnicas no tronco
+          const chestRing = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.04, 6, 16), veinMat);
+          chestRing.position.set(0, 1.65, 0.88);
+          root.add(chestRing);
+
+          // Cabeça com Coroa Sombria
+          const head = new THREE.Mesh(new THREE.BoxGeometry(0.84, 0.74, 0.78), obsidianMat);
+          head.position.set(0, 2.78, 0.15);
+          head.castShadow = true;
+          root.add(head);
+
+          for (let c = -1; c <= 1; c++) {
+            const crownSpike = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.42, 5), veinMat);
+            crownSpike.position.set(c * 0.26, 3.28, 0.15);
+            root.add(crownSpike);
+          }
+
+          const visor = new THREE.Mesh(new THREE.BoxGeometry(0.62, 0.13, 0.1), goldRuneMat);
+          visor.position.set(0, 2.8, 0.53);
+          root.add(visor);
+
+          // Ombros rúnicos flutuantes
+          const shoulderGeo = new THREE.OctahedronGeometry(0.46, 0);
+          const shoulderL = new THREE.Mesh(shoulderGeo, obsidianMat);
+          shoulderL.position.set(-1.55, 2.45, 0.1);
+          const shoulderR = new THREE.Mesh(shoulderGeo, obsidianMat);
+          shoulderR.position.set(1.55, 2.45, 0.1);
+          root.add(shoulderL, shoulderR);
+
+          // Braços maciços
+          const armGeo = new THREE.BoxGeometry(0.54, 1.62, 0.54);
+          const armL = new THREE.Mesh(armGeo, obsidianMat);
+          armL.position.set(-1.48, 1.42, 0.2);
+          const armR = new THREE.Mesh(armGeo, obsidianMat);
+          armR.position.set(1.48, 1.42, 0.2);
+          root.add(armL, armR);
+
+          data = { root, body: torso, core, shoulderL, shoulderR, armL, armR, radius: 1.38, height: 3.3 };
+        }
+
+        // Bloco de gelo ciano translúcido (ativado pelo Raio de Gelo Temporal)
+        const iceSize = data.radius * 2.15;
+        const iceBlock = new THREE.Mesh(
+          new THREE.BoxGeometry(iceSize, data.height * 1.05, iceSize),
+          new THREE.MeshStandardMaterial({
+            color: 0x67e8f9,
+            emissive: 0x0284c7,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.54,
+            roughness: 0.08
+          })
+        );
+        iceBlock.position.y = data.height * 0.52;
+        iceBlock.visible = false;
+        root.add(iceBlock);
+        data.iceBlock = iceBlock;
+
+        return data;
+      }
+    };
+
+    // ============================================================================
+    // 4. CENÁRIO 3D ATMOSFÉRICO (DOMO CELESTE, LUA COM ANÉIS & FLORESTA MÍSTICA)
+    // ============================================================================
+    class MysticForest {
+      constructor(scene) {
+        this.scene = scene;
+        this.obstacles = [];
+        this.runes = [];
+        this.magicCircleTex = ProceduralTextures.createMagicCircleTexture('#c084fc', '#fde047');
+        this.buildSkyAndLights();
+        this.buildGround();
+        this.buildEnvironmentProps();
+        this.buildFireflies();
+      }
+
+      buildSkyAndLights() {
+        this.scene.background = new THREE.Color(0x0b0716);
+        this.scene.fog = new THREE.FogExp2(0x130b2e, 0.0145);
+
+        // Domo Celeste Procedural com Gradiente Índigo-Violeta e Nebulosa
+        const skyDome = new THREE.Mesh(
+          new THREE.SphereGeometry(140, 32, 24),
+          new THREE.MeshBasicMaterial({
+            map: ProceduralTextures.createSkyDomeTexture(),
+            side: THREE.BackSide,
+            depthWrite: false,
+            fog: false
+          })
+        );
+        this.scene.add(skyDome);
+
+        // Luz Hemisférica Noturna (Céu violeta suave / Solo índigo)
+        const hemiLight = new THREE.HemisphereLight(0xa855f7, 0x1e1b4b, 0.62);
+        this.scene.add(hemiLight);
+
+        // Luz Direcional do Luar com sombras nítidas
+        this.moonLight = new THREE.DirectionalLight(0xe9d5ff, 1.25);
+        this.moonLight.position.set(28, 48, -32);
+        this.moonLight.castShadow = true;
+        this.moonLight.shadow.mapSize.width = 2048;
+        this.moonLight.shadow.mapSize.height = 2048;
+        this.moonLight.shadow.camera.near = 5;
+        this.moonLight.shadow.camera.far = 125;
+        this.moonLight.shadow.bias = -0.0005;
+        const d = 44;
+        this.moonLight.shadow.camera.left = -d;
+        this.moonLight.shadow.camera.right = d;
+        this.moonLight.shadow.camera.top = d;
+        this.moonLight.shadow.camera.bottom = -d;
+        this.scene.add(this.moonLight);
+
+        // Rim-Light Violeta/Dourado sutil vindo do horizonte
+        const rimLight = new THREE.DirectionalLight(0xfde047, 0.35);
+        rimLight.position.set(-30, 18, 35);
+        this.scene.add(rimLight);
+
+        // Lua Cheia Dourada/Lavanda + Anéis Arcanos Giratórios no Céu
+        this.moonMat = new THREE.MeshBasicMaterial({ color: 0xfef08a, fog: false });
+        this.moonMesh = new THREE.Mesh(new THREE.SphereGeometry(6.8, 28, 28), this.moonMat);
+        this.moonMesh.position.set(42, 48, -72);
+        this.scene.add(this.moonMesh);
+
+        this.moonHaloMat = new THREE.MeshBasicMaterial({
+          map: ProceduralTextures.createSoftGlowTexture(),
+          color: 0xc084fc,
+          transparent: true,
+          opacity: 0.55,
+          depthWrite: false,
+          blending: THREE.AdditiveBlending,
+          fog: false
+        });
+        const moonGlowSprite = new THREE.Sprite(this.moonHaloMat);
+        moonGlowSprite.position.copy(this.moonMesh.position);
+        moonGlowSprite.scale.set(28, 28, 1);
+        this.scene.add(moonGlowSprite);
+
+        // Anéis Arcanos Giratórios ao redor da Lua
+        this.moonRing1 = new THREE.Mesh(
+          new THREE.RingGeometry(8.5, 8.85, 64),
+          new THREE.MeshBasicMaterial({
+            color: 0xe879f9,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.45,
+            fog: false
+          })
+        );
+        this.moonRing1.position.copy(this.moonMesh.position);
+        this.moonRing1.rotation.set(0.55, 0.35, 0);
+        this.scene.add(this.moonRing1);
+
+        this.moonRing2 = new THREE.Mesh(
+          new THREE.RingGeometry(10.2, 10.45, 64),
+          new THREE.MeshBasicMaterial({
+            color: 0xfde047,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.35,
+            fog: false
+          })
+        );
+        this.moonRing2.position.copy(this.moonMesh.position);
+        this.moonRing2.rotation.set(-0.45, -0.25, 0.4);
+        this.scene.add(this.moonRing2);
+
+        // Campo de Estrelas Cintilantes
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 700;
+        const positions = new Float32Array(starCount * 3);
+        for (let i = 0; i < starCount; i++) {
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.random() * Math.PI * 0.46;
+          const r = 102 + Math.random() * 28;
+          positions[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+          positions[i * 3 + 1] = 10 + r * Math.cos(phi);
+          positions[i * 3 + 2] = r * Math.sin(phi) * Math.sin(theta);
+        }
+        starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.starsPoints = new THREE.Points(
+          starGeo,
+          new THREE.PointsMaterial({ color: 0xf5d0fe, size: 0.72, fog: false })
+        );
+        this.scene.add(this.starsPoints);
+
+        // Plano sutil de névoa rasteira translúcida no horizonte
+        const mistPlane = new THREE.Mesh(
+          new THREE.RingGeometry(36, 62, 48),
+          new THREE.MeshBasicMaterial({
+            color: 0x3b0764,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.28,
+            depthWrite: false
+          })
+        );
+        mistPlane.rotation.x = -Math.PI / 2;
+        mistPlane.position.y = 0.35;
+        this.scene.add(mistPlane);
+      }
+
+      setEclipseUrgency(isUrgent) {
+        if (isUrgent) {
+          this.moonMat.color.setHex(0xf43f5e);
+          this.moonHaloMat.color.setHex(0xe11d48);
+          this.moonLight.color.setHex(0xfda4af);
+        } else {
+          this.moonMat.color.setHex(0xfef08a);
+          this.moonHaloMat.color.setHex(0xc084fc);
+          this.moonLight.color.setHex(0xe9d5ff);
+        }
+      }
+
+      buildGround() {
+        const groundTex = ProceduralTextures.createForestGroundTexture();
+        const groundGeo = new THREE.CircleGeometry(56, 64);
+        const groundMat = new THREE.MeshStandardMaterial({
+          map: groundTex,
+          color: 0xc4b5fd,
+          roughness: 0.86,
+          metalness: 0.06
+        });
+        const ground = new THREE.Mesh(groundGeo, groundMat);
+        ground.rotation.x = -Math.PI / 2;
+        ground.receiveShadow = true;
+        this.scene.add(ground);
+
+        // Círculo de Invocação Arcano Central gravado no chão
+        this.centralSeal = new THREE.Mesh(
+          new THREE.PlaneGeometry(14.5, 14.5),
+          new THREE.MeshBasicMaterial({
+            map: this.magicCircleTex,
+            transparent: true,
+            opacity: 0.62,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          })
+        );
+        this.centralSeal.rotation.x = -Math.PI / 2;
+        this.centralSeal.position.y = 0.03;
+        this.scene.add(this.centralSeal);
+
+        // Anel externo ciano-violeta da arena
+        const ringOuter = new THREE.Mesh(
+          new THREE.RingGeometry(18.5, 18.85, 64),
+          new THREE.MeshBasicMaterial({
+            color: 0x7e22ce,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.35
+          })
+        );
+        ringOuter.rotation.x = -Math.PI / 2;
+        ringOuter.position.y = 0.02;
+        this.scene.add(ringOuter);
+      }
+
+      buildEnvironmentProps() {
+        const trunkMat = new THREE.MeshStandardMaterial({ color: 0x1a0f2e, roughness: 0.88 });
+        const leavesMat1 = new THREE.MeshStandardMaterial({ color: 0x2e1065, roughness: 0.68 });
+        const leavesMat2 = new THREE.MeshStandardMaterial({ color: 0x4c1d95, roughness: 0.62 });
+        const leavesMat3 = new THREE.MeshStandardMaterial({
+          color: 0x6b21a8,
+          emissive: 0x3b0764,
+          emissiveIntensity: 0.25,
+          roughness: 0.55
+        });
+        const rockMat = new THREE.MeshStandardMaterial({ color: 0x231b38, roughness: 0.78 });
+        const runeGlowMat = new THREE.MeshBasicMaterial({ color: 0xe879f9 });
+        const goldRuneMat = new THREE.MeshBasicMaterial({ color: 0xfde047 });
+
+        const mushVioletMat = new THREE.MeshStandardMaterial({
+          color: 0xd946ef,
+          emissive: 0xa21caf,
+          emissiveIntensity: 0.85
+        });
+        const mushCyanMat = new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0284c7,
+          emissiveIntensity: 0.85
+        });
+
+        // Árvores retorcidas estilizadas com copas em 3 camadas roxo-violeta
+        for (let i = 0; i < 38; i++) {
+          const angle = (i / 38) * Math.PI * 2 + (Math.random() - 0.5) * 0.14;
+          const dist = i < 25 ? 34 + Math.random() * 15 : 14 + Math.random() * 17;
+          const x = Math.cos(angle) * dist;
+          const z = Math.sin(angle) * dist;
+          const scale = 0.85 + Math.random() * 0.68;
+
+          const tree = new THREE.Group();
+          tree.position.set(x, 0, z);
+          tree.scale.setScalar(scale);
+
+          const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.58, 3.4, 9), trunkMat);
+          trunk.position.y = 1.7;
+          trunk.rotation.z = (Math.random() - 0.5) * 0.12;
+          trunk.castShadow = true;
+          tree.add(trunk);
+
+          const crown1 = new THREE.Mesh(new THREE.ConeGeometry(2.3, 3.5, 9), leavesMat1);
+          crown1.position.y = 4.0;
+          crown1.castShadow = true;
+          tree.add(crown1);
+
+          const crown2 = new THREE.Mesh(new THREE.ConeGeometry(1.75, 3.0, 9), leavesMat2);
+          crown2.position.y = 5.5;
+          crown2.castShadow = true;
+          tree.add(crown2);
+
+          const crown3 = new THREE.Mesh(new THREE.ConeGeometry(1.15, 2.3, 9), leavesMat3);
+          crown3.position.y = 6.8;
+          crown3.castShadow = true;
+          tree.add(crown3);
+
+          this.scene.add(tree);
+          this.obstacles.push({ x, z, radius: 0.85 * scale });
+        }
+
+        // Monólitos com Runas Entalhadas Brilhantes
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2 + 0.25;
+          const dist = 16 + (i % 3) * 7.2;
+          const x = Math.cos(angle) * dist;
+          const z = Math.sin(angle) * dist;
+
+          const monolith = new THREE.Group();
+          monolith.position.set(x, 0, z);
+          monolith.rotation.y = Math.random() * Math.PI;
+
+          const rock = new THREE.Mesh(new THREE.BoxGeometry(1.15, 2.65, 0.78), rockMat);
+          rock.position.y = 1.25;
+          rock.castShadow = true;
+          monolith.add(rock);
+
+          const runeCrystal = new THREE.Mesh(
+            new THREE.OctahedronGeometry(0.24, 0),
+            i % 2 === 0 ? runeGlowMat : goldRuneMat
+          );
+          runeCrystal.position.set(0, 1.55, 0.44);
+          monolith.add(runeCrystal);
+          this.runes.push(runeCrystal);
+
+          this.scene.add(monolith);
+          this.obstacles.push({ x, z, radius: 0.95 });
+        }
+
+        // Grupos de Cogumelos Bioluminescentes Roxos e Cianos
+        for (let i = 0; i < 34; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 5.5 + Math.random() * 29;
+          const x = Math.cos(angle) * dist;
+          const z = Math.sin(angle) * dist;
+
+          const cluster = new THREE.Group();
+          cluster.position.set(x, 0, z);
+
+          const count = 1 + (i % 3);
+          for (let m = 0; m < count; m++) {
+            const mScale = 0.65 + m * 0.28;
+            const stem = new THREE.Mesh(
+              new THREE.CylinderGeometry(0.05 * mScale, 0.08 * mScale, 0.34 * mScale, 7),
+              new THREE.MeshStandardMaterial({ color: 0xf3e8ff })
+            );
+            stem.position.set(m * 0.22, 0.17 * mScale, (m % 2) * 0.16);
+            const cap = new THREE.Mesh(
+              new THREE.SphereGeometry(0.22 * mScale, 10, 8, 0, Math.PI * 2, 0, Math.PI * 0.55),
+              i % 3 === 0 ? mushCyanMat : mushVioletMat
+            );
+            cap.position.set(m * 0.22, 0.32 * mScale, (m % 2) * 0.16);
+            cluster.add(stem, cap);
+          }
+          this.scene.add(cluster);
+        }
+      }
+
+      // Vaga-lumes e esporos mágicos flutuando pela floresta
+      buildFireflies() {
+        const count = 160;
+        const geo = new THREE.BufferGeometry();
+        const positions = new Float32Array(count * 3);
+        this.fireflyPhases = [];
+
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 3 + Math.random() * 40;
+          positions[i * 3] = Math.cos(angle) * dist;
+          positions[i * 3 + 1] = 0.6 + Math.random() * 4.2;
+          positions[i * 3 + 2] = Math.sin(angle) * dist;
+          this.fireflyPhases.push(Math.random() * Math.PI * 2);
+        }
+
+        geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        this.fireflies = new THREE.Points(
+          geo,
+          new THREE.PointsMaterial({
+            color: 0xfde047,
+            size: 0.28,
+            transparent: true,
+            opacity: 0.85,
+            blending: THREE.AdditiveBlending
+          })
+        );
+        this.scene.add(this.fireflies);
+      }
+
+      update(elapsed) {
+        // Pulso suave do Círculo de Invocação Central
+        this.centralSeal.rotation.z = elapsed * 0.12;
+        this.centralSeal.material.opacity = 0.48 + Math.sin(elapsed * 2.2) * 0.16;
+
+        // Rotação dos anéis arcanos ao redor da Lua
+        this.moonRing1.rotation.z = elapsed * 0.25;
+        this.moonRing2.rotation.z = -elapsed * 0.18;
+
+        this.runes.forEach((rune, idx) => {
+          rune.rotation.y = elapsed * 1.8 + idx;
+          rune.position.y = 1.55 + Math.sin(elapsed * 2.5 + idx) * 0.12;
+        });
+
+        // Flutuação suave dos vaga-lumes
+        const posAttr = this.fireflies.geometry.attributes.position;
+        for (let i = 0; i < this.fireflyPhases.length; i++) {
+          const phase = this.fireflyPhases[i];
+          posAttr.array[i * 3 + 1] += Math.sin(elapsed * 1.8 + phase) * 0.004;
+        }
+        posAttr.needsUpdate = true;
+      }
+    }
+
+    // ============================================================================
+    // 5. CONTROLADOR PRINCIPAL DO JOGO
+    // ============================================================================
+    class WitchAdventureGame {
+      constructor() {
+        this.canvas = document.getElementById('game-canvas');
+        this.sound = new SoundEngine();
+
+        // Configuração Three.js com ACESFilmicToneMapping e Sombras Suaves
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+        this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, powerPreference: 'high-performance' });
+        this.renderer.setSize(window.innerWidth, window.innerHeight);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.shadowMap.enabled = true;
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.08;
+
+        // Pós-Processamento: RenderPass + UnrealBloomPass calibrado
+        this.composer = new EffectComposer(this.renderer);
+        this.renderPass = new RenderPass(this.scene, this.camera);
+        this.composer.addPass(this.renderPass);
+
+        this.bloomPass = new UnrealBloomPass(
+          new THREE.Vector2(window.innerWidth, window.innerHeight),
+          0.58, // Intensidade calibrada para brilho mágico sem estourar
+          0.45, // Raio suave
+          0.82  // Limiar alto para brilhar apenas runas, cristais, olhos, lua e feitiços
+        );
+        this.composer.addPass(this.bloomPass);
+
+        // Cenário
+        this.forest = new MysticForest(this.scene);
+
+        // Personagens
+        this.witchModel = CharacterFactory.createWitch(this.forest.magicCircleTex);
+        this.scene.add(this.witchModel.root);
+
+        this.catModel = CharacterFactory.createBlackCat();
+        this.scene.add(this.catModel.root);
+
+        // Estado do Jogo
+        this.state = 'MENU';
+        this.clock = new THREE.Clock();
+        this.elapsed = 0;
+
+        // Entidades dinâmicas
+        this.projectiles = [];
+        this.enemies = [];
+        this.crystals = [];
+        this.meteors = [];
+        this.fireZones = [];
+        this.particles = [];
+        this.shockwaves = [];
+        this.afterimages = [];
+
+        // Estado da Bruxa
+        this.player = {
+          pos: new THREE.Vector3(0, 0, 0),
+          vel: new THREE.Vector3(0, 0, 0),
+          rotY: 0,
+          hp: 100,
+          maxHp: 100,
+          mana: 100,
+          maxMana: 100,
+          speed: 9.5,
+          grounded: true,
+          invulnTimer: 0,
+          castAnimTimer: 0,
+          dashTimer: 0,
+          dashCooldown: 0,
+          afterimageTimer: 0,
+          orbCooldown: 0,
+          novaCooldown: 0,
+          meteorCooldown: 0,
+          frostCooldown: 0,
+          shieldCooldown: 0,
+          shieldActiveTimer: 0
+        };
+
+        // Estado do Gato Preto
+        this.cat = {
+          pos: new THREE.Vector3(-1.5, 0, -1.2),
+          rotY: 0,
+          mode: 'FOLLOW',
+          targetCrystal: null,
+          targetEnemy: null,
+          commandCooldown: 0,
+          autoAttackCooldown: 2.0,
+          healCooldown: 6.0,
+          astralTimer: 0
+        };
+
+        // Sistema de Tempo (Cronômetro Regressivo do Eclipse)
+        this.timeRemaining = 180;
+        this.timeSurvived = 0;
+        this.lastUrgentSecond = -1;
+
+        // Progresso de Ondas
+        this.wave = 1;
+        this.score = 0;
+        this.kills = 0;
+        this.catCombos = 0;
+        this.waveTransitionTimer = 0;
+
+        // Dificuldade e Recorde Local
+        this.difficulty = 'witch';
+        this.difficultyConfigs = {
+          apprentice: { label: 'Aprendiz', playerHp: 125, enemyHpMult: 0.82, enemySpeedMult: 0.9, scoreMult: 0.8 },
+          witch: { label: 'Feiticeira', playerHp: 100, enemyHpMult: 1.0, enemySpeedMult: 1.0, scoreMult: 1.0 },
+          archmage: { label: 'Arquimaga', playerHp: 90, enemyHpMult: 1.28, enemySpeedMult: 1.14, scoreMult: 1.5 }
+        };
+        this.bestScore = parseInt(localStorage.getItem('bruxa_gato_best_score') || '0', 10) || 0;
+        document.getElementById('best-score-display').textContent = this.bestScore;
+
+        // Câmera Orbital 3D Avançada
+        this.keys = {};
+        this.joystickVec = { x: 0, y: 0 };
+        this.camState = {
+          yaw: 0,
+          pitch: 0.34,
+          targetYaw: 0,
+          targetPitch: 0.34,
+          dist: 10.5,
+          targetDist: 10.5,
+          currentPos: new THREE.Vector3(0, 5, 11),
+          currentLook: new THREE.Vector3(0, 1.5, 0),
+          shakeIntensity: 0,
+          currentFov: 60
+        };
+        this.isDraggingCam = false;
+        this.lastMouse = { x: 0, y: 0 };
+
+        this.bindEvents();
+        this.resetGameEntities();
+      }
+
+      bindEvents() {
+        window.addEventListener('resize', () => {
+          this.camera.aspect = window.innerWidth / window.innerHeight;
+          this.camera.updateProjectionMatrix();
+          this.renderer.setSize(window.innerWidth, window.innerHeight);
+          this.composer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        window.addEventListener('keydown', (e) => {
+          const code = e.code;
+          this.keys[code] = true;
+
+          if (this.state !== 'PLAYING') return;
+
+          if (code === 'Space') {
+            e.preventDefault();
+            this.jumpWitch();
+          } else if (code === 'KeyJ' || code === 'KeyZ') {
+            this.castArcaneOrb();
+          } else if (code === 'Digit1' || code === 'KeyQ') {
+            this.castArcaneNova();
+          } else if (code === 'Digit2' || code === 'KeyR') {
+            this.castMeteorShower();
+          } else if (code === 'Digit3' || code === 'KeyF') {
+            this.castTemporalFrostRay();
+          } else if (code === 'Digit4' || code === 'KeyC') {
+            this.castLunarShield();
+          } else if (code === 'KeyE') {
+            this.commandCatPounce();
+          } else if (code === 'ShiftLeft' || code === 'ShiftRight') {
+            this.castEtherealDash();
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.code] = false;
+        });
+
+        this.canvas.addEventListener('mousedown', (e) => {
+          if (this.state !== 'PLAYING') return;
+          this.sound.init();
+
+          if (e.button === 0) {
+            this.isDraggingCam = true;
+            this.lastMouse = { x: e.clientX, y: e.clientY };
+            this.castArcaneOrb();
+          } else if (e.button === 2) {
+            this.commandCatPounce();
+          }
+        });
+
+        window.addEventListener('mouseup', () => {
+          this.isDraggingCam = false;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+          if (this.state !== 'PLAYING') return;
+          if (document.pointerLockElement === this.canvas) {
+            this.camState.targetYaw -= e.movementX * 0.0038;
+            this.camState.targetPitch = Math.max(0.12, Math.min(0.88, this.camState.targetPitch + e.movementY * 0.0032));
+          } else if (this.isDraggingCam) {
+            const dx = e.clientX - this.lastMouse.x;
+            const dy = e.clientY - this.lastMouse.y;
+            this.lastMouse = { x: e.clientX, y: e.clientY };
+            this.camState.targetYaw -= dx * 0.0055;
+            this.camState.targetPitch = Math.max(0.12, Math.min(0.88, this.camState.targetPitch + dy * 0.0042));
+          }
+        });
+
+        this.canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        window.addEventListener('wheel', (e) => {
+          if (this.state !== 'PLAYING') return;
+          this.camState.targetDist = Math.max(6.0, Math.min(16.5, this.camState.targetDist + e.deltaY * 0.0055));
+        }, { passive: true });
+
+        document.getElementById('btn-camera-lock').addEventListener('click', () => {
+          if (document.pointerLockElement === this.canvas) {
+            document.exitPointerLock();
+          } else if (this.canvas.requestPointerLock) {
+            this.canvas.requestPointerLock();
+          }
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+          const locked = document.pointerLockElement === this.canvas;
+          document.getElementById('camera-mode-label').textContent = locked
+            ? 'Mira Travada (ESC sai)'
+            : 'Travar Mira (Mouse)';
+        });
+
+        document.getElementById('btn-mute').addEventListener('click', () => {
+          this.sound.init();
+          const muted = this.sound.toggleMute();
+          document.getElementById('btn-mute').textContent = muted ? '🔇' : '🔊';
+        });
+
+        document.getElementById('skill-orb').addEventListener('click', () => this.castArcaneOrb());
+        document.getElementById('skill-nova').addEventListener('click', () => this.castArcaneNova());
+        document.getElementById('skill-meteor').addEventListener('click', () => this.castMeteorShower());
+        document.getElementById('skill-frost').addEventListener('click', () => this.castTemporalFrostRay());
+        document.getElementById('skill-shield').addEventListener('click', () => this.castLunarShield());
+        document.getElementById('skill-cat').addEventListener('click', () => this.commandCatPounce());
+        document.getElementById('skill-dash').addEventListener('click', () => this.castEtherealDash());
+        document.getElementById('skill-jump').addEventListener('click', () => this.jumpWitch());
+
+        document.getElementById('btn-start').addEventListener('click', () => this.startGame());
+        document.getElementById('btn-restart').addEventListener('click', () => this.startGame());
+        document.getElementById('btn-back-menu').addEventListener('click', () => this.returnToMenu());
+
+        // Abas do Menu Principal (Jornada vs Grimório)
+        const tabAdventure = document.getElementById('tab-adventure');
+        const tabGrimoire = document.getElementById('tab-grimoire');
+        const panelAdventure = document.getElementById('menu-panel-adventure');
+        const panelGrimoire = document.getElementById('menu-panel-grimoire');
+
+        tabAdventure.addEventListener('click', () => {
+          tabAdventure.className = 'px-4 py-1.5 rounded-xl text-xs font-bold bg-purple-700/85 text-amber-200 border border-amber-300/40 shadow transition cursor-pointer';
+          tabGrimoire.className = 'px-4 py-1.5 rounded-xl text-xs font-bold text-purple-200 hover:text-white transition cursor-pointer';
+          panelAdventure.classList.remove('hidden');
+          panelGrimoire.classList.add('hidden');
+        });
+
+        tabGrimoire.addEventListener('click', () => {
+          tabGrimoire.className = 'px-4 py-1.5 rounded-xl text-xs font-bold bg-purple-700/85 text-amber-200 border border-amber-300/40 shadow transition cursor-pointer';
+          tabAdventure.className = 'px-4 py-1.5 rounded-xl text-xs font-bold text-purple-200 hover:text-white transition cursor-pointer';
+          panelGrimoire.classList.remove('hidden');
+          panelAdventure.classList.add('hidden');
+        });
+
+        // Seletor de Dificuldade
+        document.querySelectorAll('.diff-pill').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.diff-pill').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            this.difficulty = btn.dataset.diff || 'witch';
+          });
+        });
+
+        this.setupTouchJoystick();
+      }
+
+      setupTouchJoystick() {
+        const zone = document.getElementById('mobile-joystick-zone');
+        const knob = document.getElementById('mobile-joystick-knob');
+        let activeTouchId = null;
+
+        if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+          zone.classList.remove('hidden');
+        }
+
+        zone.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const touch = e.changedTouches[0];
+          activeTouchId = touch.identifier;
+          updateKnob(touch);
+        }, { passive: false });
+
+        zone.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          for (let i = 0; i < e.changedTouches.length; i++) {
+            if (e.changedTouches[i].identifier === activeTouchId) {
+              updateKnob(e.changedTouches[i]);
+            }
+          }
+        }, { passive: false });
+
+        const resetKnob = () => {
+          activeTouchId = null;
+          this.joystickVec = { x: 0, y: 0 };
+          knob.style.transform = 'translate(0px, 0px)';
+        };
+
+        zone.addEventListener('touchend', resetKnob);
+        zone.addEventListener('touchcancel', resetKnob);
+
+        const updateKnob = (touch) => {
+          const rect = zone.getBoundingClientRect();
+          const cx = rect.left + rect.width / 2;
+          const cy = rect.top + rect.height / 2;
+          const maxR = rect.width / 2 - 18;
+          let dx = touch.clientX - cx;
+          let dy = touch.clientY - cy;
+          const dist = Math.hypot(dx, dy);
+          if (dist > maxR) {
+            dx = (dx / dist) * maxR;
+            dy = (dy / dist) * maxR;
+          }
+          knob.style.transform = `translate(${dx}px, ${dy}px)`;
+          this.joystickVec.x = dx / maxR;
+          this.joystickVec.y = dy / maxR;
+        };
+      }
+
+      showToast(text, colorClass = 'text-purple-200 border-purple-400/40') {
+        const container = document.getElementById('toast-container');
+        const el = document.createElement('div');
+        el.className = `toast-anim glass-panel px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold border ${colorClass} shadow-lg whitespace-nowrap`;
+        el.textContent = text;
+        container.appendChild(el);
+        setTimeout(() => el.remove(), 2650);
+      }
+
+      // Números de dano flutuantes projetados da posição 3D para a tela
+      spawnDamageNumber(worldPos, amount, color = '#f0abfc', isCrit = false) {
+        const projected = worldPos.clone().add(new THREE.Vector3((Math.random() - 0.5) * 0.5, 1.8, 0));
+        projected.project(this.camera);
+
+        if (projected.z > 1) return;
+
+        const x = (projected.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-projected.y * 0.5 + 0.5) * window.innerHeight;
+
+        const el = document.createElement('div');
+        el.className = 'dmg-popup';
+        el.style.left = `${x}px`;
+        el.style.top = `${y}px`;
+        el.style.color = color;
+        el.style.fontSize = isCrit ? '20px' : '15px';
+        el.textContent = isCrit ? `✦ ${amount}!` : `-${amount}`;
+
+        document.getElementById('damage-layer').appendChild(el);
+        setTimeout(() => el.remove(), 960);
+      }
+
+      addCameraShake(amount) {
+        this.camState.shakeIntensity = Math.min(0.65, this.camState.shakeIntensity + amount);
+      }
+
+      getCameraAimPoint(maxDist = 26) {
+        const camForward = new THREE.Vector3();
+        this.camera.getWorldDirection(camForward);
+        const flatForward = new THREE.Vector3(camForward.x, 0, camForward.z);
+        if (flatForward.lengthSq() < 0.001) {
+          flatForward.set(-Math.sin(this.camState.yaw), 0, -Math.cos(this.camState.yaw));
+        } else {
+          flatForward.normalize();
+        }
+
+        let lockedEnemy = null;
+        let bestAngle = 0.24;
+        for (const enemy of this.enemies) {
+          const toEnemy = new THREE.Vector3().subVectors(enemy.pos, this.player.pos).setY(0);
+          const dist = toEnemy.length();
+          if (dist > maxDist || dist < 0.5) continue;
+          toEnemy.normalize();
+          const angle = flatForward.angleTo(toEnemy);
+          if (angle < bestAngle) {
+            bestAngle = angle;
+            lockedEnemy = enemy;
+          }
+        }
+
+        if (lockedEnemy) {
+          return {
+            dir: new THREE.Vector3().subVectors(lockedEnemy.pos, this.player.pos).setY(0).normalize(),
+            targetPos: lockedEnemy.pos.clone(),
+            enemy: lockedEnemy
+          };
+        }
+
+        const aimTarget = this.player.pos.clone().addScaledVector(flatForward, 13);
+        return {
+          dir: flatForward,
+          targetPos: aimTarget,
+          enemy: null
+        };
+      }
+
+      startGame() {
+        this.sound.init();
+        this.resetGameEntities();
+        this.state = 'PLAYING';
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('gameover-screen').classList.add('hidden');
+        document.getElementById('hud').classList.remove('hidden');
+        document.getElementById('crosshair').classList.remove('hidden');
+        this.spawnWave(1);
+        const diffLabel = this.difficultyConfigs[this.difficulty].label;
+        this.showToast(`✦ Modo ${diffLabel}: Sobreviva ao Eclipse (03:00)!`, 'text-amber-200 border-amber-400/50');
+      }
+
+      returnToMenu() {
+        this.resetGameEntities();
+        this.state = 'MENU';
+        document.getElementById('gameover-screen').classList.add('hidden');
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('crosshair').classList.add('hidden');
+        document.getElementById('start-screen').classList.remove('hidden');
+        document.getElementById('best-score-display').textContent = this.bestScore;
+      }
+
+      createEnemyHpBarElement(type) {
+        const container = document.createElement('div');
+        const isBoss = type === 'golem';
+        container.className = 'enemy-hp-bar';
+
+        if (isBoss) {
+          container.innerHTML = `
+            <div class="flex flex-col items-center gap-0.5">
+              <div class="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#160d29]/90 border border-amber-300/60 text-[9px] font-magic font-bold tracking-wider text-amber-200 shadow">
+                <span>👑</span> GOLEM DAS TREVAS
+              </div>
+              <div class="enemy-hp-frame boss w-28 h-2.5 rounded-full p-[1.5px] overflow-hidden relative">
+                <div class="hp-ghost absolute inset-[1.5px] rounded-full bg-amber-200/80 transition-all duration-300" style="width: 100%;"></div>
+                <div class="hp-fill relative h-full rounded-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-amber-300 transition-all duration-100" style="width: 100%;"></div>
+              </div>
+            </div>
+          `;
+        } else {
+          const fillGrad = type === 'bat'
+            ? 'from-indigo-500 via-purple-500 to-fuchsia-400'
+            : 'from-emerald-600 via-emerald-400 to-amber-200';
+          container.innerHTML = `
+            <div class="enemy-hp-frame w-14 h-1.5 rounded-full p-[1px] overflow-hidden relative">
+              <div class="hp-ghost absolute inset-[1px] rounded-full bg-amber-100/85 transition-all duration-300" style="width: 100%;"></div>
+              <div class="hp-fill relative h-full rounded-full bg-gradient-to-r ${fillGrad} transition-all duration-100" style="width: 100%;"></div>
+            </div>
+          `;
+        }
+
+        document.getElementById('enemy-hp-layer').appendChild(container);
+        return {
+          el: container,
+          frameEl: container.querySelector('.enemy-hp-frame'),
+          fillEl: container.querySelector('.hp-fill'),
+          ghostEl: container.querySelector('.hp-ghost')
+        };
+      }
+
+      resetGameEntities() {
+        this.projectiles.forEach(p => this.scene.remove(p.mesh));
+        this.enemies.forEach(e => {
+          this.scene.remove(e.model.root);
+          if (e.hpBar && e.hpBar.el) e.hpBar.el.remove();
+        });
+        this.crystals.forEach(c => this.scene.remove(c.mesh));
+        this.meteors.forEach(m => this.scene.remove(m.mesh));
+        this.fireZones.forEach(f => this.scene.remove(f.mesh));
+        this.particles.forEach(pt => this.scene.remove(pt.mesh));
+        this.shockwaves.forEach(sw => this.scene.remove(sw.mesh));
+        this.afterimages.forEach(ai => this.scene.remove(ai.mesh));
+        document.getElementById('enemy-hp-layer').innerHTML = '';
+
+        this.projectiles = [];
+        this.enemies = [];
+        this.crystals = [];
+        this.meteors = [];
+        this.fireZones = [];
+        this.particles = [];
+        this.shockwaves = [];
+        this.afterimages = [];
+
+        const diffCfg = this.difficultyConfigs[this.difficulty] || this.difficultyConfigs.witch;
+
+        this.player.pos.set(0, 0, 0);
+        this.player.vel.set(0, 0, 0);
+        this.player.rotY = Math.PI;
+        this.player.maxHp = diffCfg.playerHp;
+        this.player.hp = diffCfg.playerHp;
+        this.player.mana = 100;
+        this.player.grounded = true;
+        this.player.invulnTimer = 0;
+        this.player.dashTimer = 0;
+        this.player.dashCooldown = 0;
+        this.player.afterimageTimer = 0;
+        this.player.orbCooldown = 0;
+        this.player.novaCooldown = 0;
+        this.player.meteorCooldown = 0;
+        this.player.frostCooldown = 0;
+        this.player.shieldCooldown = 0;
+        this.player.shieldActiveTimer = 0;
+        this.witchModel.shieldGroup.visible = false;
+
+        this.witchModel.root.position.copy(this.player.pos);
+        this.witchModel.root.rotation.y = this.player.rotY;
+
+        this.cat.pos.set(-1.6, 0, 1.2);
+        this.cat.mode = 'FOLLOW';
+        this.cat.targetCrystal = null;
+        this.cat.targetEnemy = null;
+        this.cat.commandCooldown = 0;
+        this.cat.autoAttackCooldown = 2.5;
+        this.cat.healCooldown = 5.0;
+        this.cat.astralTimer = 0;
+        this.setCatAstralVisual(false);
+        this.catModel.root.position.copy(this.cat.pos);
+
+        this.timeRemaining = 180;
+        this.timeSurvived = 0;
+        this.lastUrgentSecond = -1;
+        this.forest.setEclipseUrgency(false);
+        document.getElementById('timer-text').classList.remove('timer-urgent');
+
+        this.wave = 1;
+        this.score = 0;
+        this.kills = 0;
+        this.catCombos = 0;
+        this.waveTransitionTimer = 0;
+
+        this.camState.yaw = 0;
+        this.camState.targetYaw = 0;
+        this.camState.pitch = 0.34;
+        this.camState.targetPitch = 0.34;
+        this.camState.shakeIntensity = 0;
+
+        for (let i = 0; i < 8; i++) {
+          this.spawnCrystal(false);
+        }
+        this.spawnCrystal(true);
+        this.updateHUD();
+      }
+
+      setCatAstralVisual(active) {
+        const box = document.getElementById('cat-status-box');
+        const nameLabel = document.getElementById('cat-name-label');
+        if (active) {
+          this.catModel.matFur.color.setHex(0x581c87);
+          this.catModel.matFur.emissive.setHex(0xfacc15);
+          this.catModel.matFur.emissiveIntensity = 0.72;
+          this.catModel.astralStars.visible = true;
+          this.catModel.catLight.color.setHex(0xfde047);
+          this.catModel.catLight.intensity = 1.9;
+          this.catModel.root.scale.setScalar(1.22);
+          box.className = 'flex items-center justify-between bg-purple-900/75 border border-amber-300/70 rounded-xl px-2.5 py-1.5 transition-colors';
+          nameLabel.textContent = 'Gato Astral (2x Dano!)';
+        } else {
+          this.catModel.matFur.color.setHex(0x110d1b);
+          this.catModel.matFur.emissive.setHex(0x000000);
+          this.catModel.matFur.emissiveIntensity = 0;
+          this.catModel.astralStars.visible = false;
+          this.catModel.catLight.color.setHex(0xa855f7);
+          this.catModel.catLight.intensity = 0.85;
+          this.catModel.root.scale.setScalar(1.0);
+          box.className = 'flex items-center justify-between bg-indigo-950/65 border border-purple-400/30 rounded-xl px-2.5 py-1.5 transition-colors';
+          nameLabel.textContent = 'Gato Sombrio';
+        }
+      }
+
+      // ========================================================================
+      // SPAWN DE CRISTAIS DE MANA, RELÍQUIAS TEMPORAIS E HORDAS
+      // ========================================================================
+      spawnCrystal(isTimeRelic = false, customPos = null) {
+        let x, z;
+        if (customPos) {
+          x = customPos.x;
+          z = customPos.z;
+        } else {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 6 + Math.random() * 25;
+          x = Math.cos(angle) * dist;
+          z = Math.sin(angle) * dist;
+        }
+
+        const group = new THREE.Group();
+        const geo = isTimeRelic ? new THREE.TorusKnotGeometry(0.28, 0.085, 36, 8) : new THREE.OctahedronGeometry(0.36, 0);
+        const mat = new THREE.MeshStandardMaterial({
+          color: isTimeRelic ? 0xfde047 : 0x38bdf8,
+          emissive: isTimeRelic ? 0xf59e0b : 0x0284c7,
+          emissiveIntensity: 1.05,
+          roughness: 0.18
+        });
+        const core = new THREE.Mesh(geo, mat);
+        group.add(core);
+
+        const haloRing = new THREE.Mesh(
+          new THREE.RingGeometry(0.42, 0.48, 24),
+          new THREE.MeshBasicMaterial({
+            color: isTimeRelic ? 0xfef08a : 0x67e8f9,
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.65
+          })
+        );
+        haloRing.rotation.x = Math.PI / 2;
+        group.add(haloRing);
+
+        group.position.set(x, 0.78, z);
+        this.scene.add(group);
+
+        this.crystals.push({
+          mesh: group,
+          pos: new THREE.Vector3(x, 0.78, z),
+          isTimeRelic,
+          manaValue: isTimeRelic ? 35 : 22,
+          timeBonus: isTimeRelic ? 15 : 0
+        });
+      }
+
+      spawnWave(waveNum) {
+        this.wave = waveNum;
+        const count = 4 + waveNum * 2;
+        const diffCfg = this.difficultyConfigs[this.difficulty] || this.difficultyConfigs.witch;
+
+        for (let i = 0; i < count; i++) {
+          const angle = (i / count) * Math.PI * 2 + Math.random() * 0.4;
+          const dist = 24 + Math.random() * 12;
+          const x = Math.cos(angle) * dist;
+          const z = Math.sin(angle) * dist;
+
+          let type = 'slime';
+          if (waveNum >= 2 && i === 0) {
+            type = 'golem';
+          } else if (waveNum >= 2 && i % 3 === 1) {
+            type = 'bat';
+          }
+
+          const model = CharacterFactory.createEnemy(type);
+          model.root.position.set(x, 0, z);
+          this.scene.add(model.root);
+
+          const rawHp = type === 'golem' ? 165 + waveNum * 28 : (type === 'bat' ? 48 + waveNum * 8 : 58 + waveNum * 10);
+          const baseHp = Math.round(rawHp * diffCfg.enemyHpMult);
+          const rawSpeed = type === 'golem' ? 3.3 : (type === 'bat' ? 5.6 : 4.2 + Math.min(2.0, waveNum * 0.2));
+          const speed = rawSpeed * diffCfg.enemySpeedMult;
+          const hpBar = this.createEnemyHpBarElement(type);
+
+          this.enemies.push({
+            type,
+            model,
+            hpBar,
+            pos: new THREE.Vector3(x, 0, z),
+            hp: baseHp,
+            maxHp: baseHp,
+            ghostHp: baseHp,
+            speed,
+            stunTimer: 0,
+            frozenTimer: 0,
+            attackCooldown: 0,
+            bobOffset: Math.random() * Math.PI * 2
+          });
+        }
+
+        while (this.crystals.length < 7) {
+          this.spawnCrystal(false);
+        }
+        if (waveNum % 2 === 0) {
+          this.spawnCrystal(true);
+        }
+      }
+
+      // ========================================================================
+      // ARSENAL DE PODERES MÁGICOS DA BRUXA & SINERGIA COM O GATO
+      // ========================================================================
+      jumpWitch() {
+        if (this.player.grounded) {
+          this.player.vel.y = 10.5;
+          this.player.grounded = false;
+          this.spawnBurstParticles(this.player.pos, 0xc084fc, 10, 2.8);
+        }
+      }
+
+      castArcaneOrb() {
+        if (this.player.orbCooldown > 0) return;
+        this.player.orbCooldown = 0.25;
+        this.player.castAnimTimer = 0.22;
+        this.sound.playOrbCast();
+
+        const aim = this.getCameraAimPoint(24);
+        this.player.rotY = Math.atan2(aim.dir.x, aim.dir.z);
+
+        const startPos = this.player.pos.clone().add(new THREE.Vector3(0, 1.35, 0)).addScaledVector(aim.dir, 0.85);
+
+        const orbGroup = new THREE.Group();
+        const core = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.24, 1),
+          new THREE.MeshBasicMaterial({ color: 0xf5d0fe })
+        );
+        const halo = new THREE.Mesh(
+          new THREE.SphereGeometry(0.38, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0xa855f7, transparent: true, opacity: 0.5 })
+        );
+        const light = new THREE.PointLight(0xd946ef, 1.5, 8);
+        orbGroup.add(core, halo, light);
+        orbGroup.position.copy(startPos);
+        this.scene.add(orbGroup);
+
+        this.projectiles.push({
+          type: 'orb',
+          mesh: orbGroup,
+          pos: startPos,
+          vel: aim.dir.clone().multiplyScalar(27),
+          life: 1.35,
+          damage: 28
+        });
+      }
+
+      castArcaneNova() {
+        const manaCost = 20;
+        if (this.player.novaCooldown > 0) return;
+        if (this.player.mana < manaCost) {
+          this.showToast('Mana insuficiente (20 MP)!', 'text-cyan-300 border-cyan-400/40');
+          return;
+        }
+
+        this.player.mana -= manaCost;
+        this.player.novaCooldown = 2.6;
+        this.player.castAnimTimer = 0.4;
+        this.sound.playNovaBlast();
+        this.addCameraShake(0.28);
+
+        // Círculo rúnico mágico expansivo no solo
+        const sealMesh = new THREE.Mesh(
+          new THREE.PlaneGeometry(2.2, 2.2),
+          new THREE.MeshBasicMaterial({
+            map: this.forest.magicCircleTex,
+            color: 0xe879f9,
+            transparent: true,
+            opacity: 0.95,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          })
+        );
+        sealMesh.rotation.x = -Math.PI / 2;
+        sealMesh.position.set(this.player.pos.x, 0.14, this.player.pos.z);
+        this.scene.add(sealMesh);
+
+        this.shockwaves.push({
+          mesh: sealMesh,
+          age: 0,
+          maxAge: 0.52,
+          maxRadius: 7.5
+        });
+
+        this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 1, 0)), 0xf0abfc, 32, 9.2);
+
+        const radius = 8.0;
+        this.enemies.forEach(enemy => {
+          const dist = enemy.pos.distanceTo(this.player.pos);
+          if (dist <= radius) {
+            this.damageEnemy(enemy, 60);
+            const pushDir = new THREE.Vector3().subVectors(enemy.pos, this.player.pos).setY(0).normalize();
+            enemy.pos.addScaledVector(pushDir, 3.5);
+            enemy.stunTimer = Math.max(enemy.stunTimer, 1.2);
+          }
+        });
+      }
+
+      castMeteorShower() {
+        const manaCost = 35;
+        if (this.player.meteorCooldown > 0) return;
+        if (this.player.mana < manaCost) {
+          this.showToast('Mana insuficiente (35 MP)!', 'text-cyan-300 border-cyan-400/40');
+          return;
+        }
+
+        this.player.mana -= manaCost;
+        this.player.meteorCooldown = 5.5;
+        this.player.castAnimTimer = 0.45;
+        this.addCameraShake(0.22);
+
+        const aim = this.getCameraAimPoint(24);
+        this.player.rotY = Math.atan2(aim.dir.x, aim.dir.z);
+        this.showToast('✦ Chuva de Meteoros Cósmicos!', 'text-amber-200 border-amber-400/50');
+
+        // Círculo rúnico de invocação na área alvo
+        const targetSeal = new THREE.Mesh(
+          new THREE.PlaneGeometry(7.2, 7.2),
+          new THREE.MeshBasicMaterial({
+            map: this.forest.magicCircleTex,
+            color: 0xfde047,
+            transparent: true,
+            opacity: 0.8,
+            depthWrite: false,
+            blending: THREE.AdditiveBlending
+          })
+        );
+        targetSeal.rotation.x = -Math.PI / 2;
+        targetSeal.position.set(aim.targetPos.x, 0.08, aim.targetPos.z);
+        this.scene.add(targetSeal);
+        this.shockwaves.push({
+          mesh: targetSeal,
+          age: 0,
+          maxAge: 1.4,
+          maxRadius: 0.25
+        });
+
+        for (let i = 0; i < 5; i++) {
+          const offsetAngle = (i / 5) * Math.PI * 2 + Math.random() * 0.5;
+          const offsetDist = i === 0 ? 0 : 1.8 + Math.random() * 2.6;
+          const targetX = aim.targetPos.x + Math.cos(offsetAngle) * offsetDist;
+          const targetZ = aim.targetPos.z + Math.sin(offsetAngle) * offsetDist;
+
+          const meteorMesh = new THREE.Mesh(
+            new THREE.DodecahedronGeometry(0.65, 1),
+            new THREE.MeshStandardMaterial({
+              color: 0x7e22ce,
+              emissive: 0xf59e0b,
+              emissiveIntensity: 1.25,
+              roughness: 0.35
+            })
+          );
+          const startY = 16 + i * 2.8;
+          meteorMesh.position.set(targetX + 3, startY, targetZ - 3);
+          this.scene.add(meteorMesh);
+
+          this.meteors.push({
+            mesh: meteorMesh,
+            targetPos: new THREE.Vector3(targetX, 0, targetZ),
+            delay: i * 0.16,
+            speed: 28
+          });
+        }
+      }
+
+      castTemporalFrostRay() {
+        const manaCost = 25;
+        if (this.player.frostCooldown > 0) return;
+        if (this.player.mana < manaCost) {
+          this.showToast('Mana insuficiente (25 MP)!', 'text-cyan-300 border-cyan-400/40');
+          return;
+        }
+
+        this.player.mana -= manaCost;
+        this.player.frostCooldown = 4.2;
+        this.player.castAnimTimer = 0.35;
+        this.sound.playFrostCast();
+
+        const aim = this.getCameraAimPoint(24);
+        this.player.rotY = Math.atan2(aim.dir.x, aim.dir.z);
+
+        const startPos = this.player.pos.clone().add(new THREE.Vector3(0, 1.3, 0)).addScaledVector(aim.dir, 0.9);
+
+        const frostGroup = new THREE.Group();
+        const crystal = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.42, 0),
+          new THREE.MeshBasicMaterial({ color: 0xe0f2fe })
+        );
+        const aura = new THREE.Mesh(
+          new THREE.SphereGeometry(0.62, 12, 12),
+          new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.48 })
+        );
+        frostGroup.add(crystal, aura);
+        frostGroup.position.copy(startPos);
+        this.scene.add(frostGroup);
+
+        this.projectiles.push({
+          type: 'frost',
+          mesh: frostGroup,
+          pos: startPos,
+          vel: aim.dir.clone().multiplyScalar(25),
+          life: 1.4,
+          damage: 32
+        });
+      }
+
+      castLunarShield() {
+        const manaCost = 40;
+        if (this.player.shieldCooldown > 0) return;
+        if (this.player.mana < manaCost) {
+          this.showToast('Mana insuficiente (40 MP)!', 'text-cyan-300 border-cyan-400/40');
+          return;
+        }
+
+        this.player.mana -= manaCost;
+        this.player.shieldCooldown = 11.0;
+        this.player.shieldActiveTimer = 8.0;
+        this.cat.astralTimer = 8.0;
+        this.witchModel.shieldGroup.visible = true;
+        this.setCatAstralVisual(true);
+
+        this.sound.playLunarShield();
+        this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 1.2, 0)), 0xfde047, 26, 6.2);
+        this.spawnBurstParticles(this.cat.pos.clone().add(new THREE.Vector3(0, 0.5, 0)), 0xfacc15, 20, 5.2);
+        this.showToast('✦ Escudo Lunar + Gato em Forma Astral (8s)!', 'text-amber-200 border-amber-300/60');
+      }
+
+      castEtherealDash() {
+        if (this.player.dashCooldown > 0) return;
+        this.player.dashTimer = 0.24;
+        this.player.dashCooldown = 1.5;
+        this.player.afterimageTimer = 0;
+        this.player.invulnTimer = Math.max(this.player.invulnTimer, 0.4);
+        this.sound.playDash();
+        this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 0.9, 0)), 0x67e8f9, 22, 5.5);
+      }
+
+      // Pós-imagem fantasmagórica roxa/dourada durante o Passo Etéreo
+      spawnWitchAfterimage() {
+        const ghostMat = new THREE.MeshBasicMaterial({
+          color: 0xc084fc,
+          transparent: true,
+          opacity: 0.48,
+          depthWrite: false
+        });
+        const ghostGroup = new THREE.Group();
+        const body = new THREE.Mesh(new THREE.ConeGeometry(0.68, 1.55, 12), ghostMat);
+        body.position.y = 0.78;
+        const hat = new THREE.Mesh(new THREE.ConeGeometry(0.36, 0.85, 12), ghostMat);
+        hat.position.y = 2.15;
+        ghostGroup.add(body, hat);
+        ghostGroup.position.copy(this.player.pos);
+        ghostGroup.rotation.y = this.player.rotY;
+        this.scene.add(ghostGroup);
+
+        this.afterimages.push({
+          mesh: ghostGroup,
+          mat: ghostMat,
+          life: 0.35,
+          maxLife: 0.35
+        });
+      }
+
+      commandCatPounce() {
+        if (this.cat.commandCooldown > 0) return;
+        const aim = this.getCameraAimPoint(22);
+        const target = aim.enemy || this.findNearestEnemy(this.player.pos, 22);
+        if (!target) {
+          this.showToast('Nenhum inimigo por perto para o gato atacar!', 'text-amber-200 border-amber-400/40');
+          return;
+        }
+
+        this.cat.commandCooldown = this.cat.astralTimer > 0 ? 2.2 : 3.8;
+        this.cat.mode = 'ATTACK';
+        this.cat.targetEnemy = target;
+        this.sound.playCatMeow(false);
+        this.showToast(
+          target.frozenTimer > 0 ? '✦ Combo Crítico Estilhaçador!' : '✦ Investida Sombria do Gato!',
+          'text-amber-300 border-amber-400/50'
+        );
+      }
+
+      findNearestEnemy(origin, maxRange = 25) {
+        let best = null;
+        let bestDist = Infinity;
+        for (const enemy of this.enemies) {
+          const dist = enemy.pos.distanceTo(origin);
+          if (dist <= maxRange && dist < bestDist) {
+            bestDist = dist;
+            best = enemy;
+          }
+        }
+        return best;
+      }
+
+      damageEnemy(enemy, amount, isCritical = false) {
+        const finalDamage = enemy.frozenTimer > 0 ? Math.round(amount * 1.35) : amount;
+        enemy.hp = Math.max(0, enemy.hp - finalDamage);
+
+        if (enemy.hpBar) {
+          const pct = Math.max(0, (enemy.hp / enemy.maxHp) * 100);
+          enemy.hpBar.fillEl.style.width = `${pct}%`;
+        }
+
+        this.spawnDamageNumber(
+          enemy.pos,
+          finalDamage,
+          isCritical ? '#fde047' : (enemy.frozenTimer > 0 ? '#67e8f9' : '#f0abfc'),
+          isCritical
+        );
+
+        this.spawnBurstParticles(
+          enemy.pos.clone().add(new THREE.Vector3(0, 0.9, 0)),
+          isCritical ? 0xfde047 : 0xd946ef,
+          isCritical ? 22 : 11,
+          isCritical ? 7.2 : 4.5
+        );
+
+        if (enemy.hp <= 0) {
+          this.sound.playEnemyHit(true);
+          this.spawnBurstParticles(enemy.pos.clone().add(new THREE.Vector3(0, 1.0, 0)), 0xa855f7, 24, 6.8);
+          this.scene.remove(enemy.model.root);
+          if (enemy.hpBar && enemy.hpBar.el) {
+            enemy.hpBar.el.remove();
+          }
+          this.enemies = this.enemies.filter(e => e !== enemy);
+
+          const diffCfg = this.difficultyConfigs[this.difficulty] || this.difficultyConfigs.witch;
+          const basePts = enemy.type === 'golem' ? 400 : (enemy.type === 'bat' ? 130 : 100);
+          this.kills++;
+          this.score += Math.round(basePts * diffCfg.scoreMult);
+
+          if (enemy.type === 'golem') {
+            this.timeRemaining += 20;
+            this.addCameraShake(0.32);
+            this.showToast('✦ Chefe Golem derrotado! +20s no Eclipse!', 'text-amber-200 border-amber-400/60');
+            this.spawnCrystal(true, enemy.pos);
+          } else if (Math.random() < 0.55) {
+            this.spawnCrystal(Math.random() < 0.14, enemy.pos);
+          }
+        } else {
+          this.sound.playEnemyHit(false);
+        }
+      }
+
+      spawnBurstParticles(origin, colorHex, count = 12, speed = 4) {
+        const geo = new THREE.OctahedronGeometry(0.11, 0);
+        const mat = new THREE.MeshBasicMaterial({ color: colorHex });
+        for (let i = 0; i < count; i++) {
+          const mesh = new THREE.Mesh(geo, mat);
+          mesh.position.copy(origin);
+          this.scene.add(mesh);
+
+          const angle = Math.random() * Math.PI * 2;
+          const up = (Math.random() - 0.15) * speed;
+          const horiz = (0.3 + Math.random() * 0.7) * speed;
+
+          this.particles.push({
+            mesh,
+            vel: new THREE.Vector3(Math.cos(angle) * horiz, up, Math.sin(angle) * horiz),
+            life: 0.35 + Math.random() * 0.35
+          });
+        }
+      }
+
+      // ========================================================================
+      // ATUALIZAÇÃO DE TEMPO, BRUXA, GATO, METEOROS E CÂMERA ORBITAL
+      // ========================================================================
+      updateEclipseTimer(dt) {
+        this.timeRemaining = Math.max(0, this.timeRemaining - dt);
+        this.timeSurvived += dt;
+
+        const timerEl = document.getElementById('timer-text');
+        const totalSecs = Math.ceil(this.timeRemaining);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        timerEl.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+        if (this.timeRemaining <= 20 && this.timeRemaining > 0) {
+          timerEl.classList.add('timer-urgent');
+          this.forest.setEclipseUrgency(true);
+          if (totalSecs !== this.lastUrgentSecond) {
+            this.lastUrgentSecond = totalSecs;
+            this.sound.playTimerTick();
+          }
+        } else {
+          timerEl.classList.remove('timer-urgent');
+          this.forest.setEclipseUrgency(false);
+        }
+
+        if (this.timeRemaining <= 0) {
+          this.triggerEndGame(true);
+        }
+      }
+
+      updateWitch(dt) {
+        this.player.orbCooldown = Math.max(0, this.player.orbCooldown - dt);
+        this.player.novaCooldown = Math.max(0, this.player.novaCooldown - dt);
+        this.player.meteorCooldown = Math.max(0, this.player.meteorCooldown - dt);
+        this.player.frostCooldown = Math.max(0, this.player.frostCooldown - dt);
+        this.player.shieldCooldown = Math.max(0, this.player.shieldCooldown - dt);
+        this.player.dashCooldown = Math.max(0, this.player.dashCooldown - dt);
+        this.player.dashTimer = Math.max(0, this.player.dashTimer - dt);
+        this.player.invulnTimer = Math.max(0, this.player.invulnTimer - dt);
+        this.player.castAnimTimer = Math.max(0, this.player.castAnimTimer - dt);
+
+        if (this.player.shieldActiveTimer > 0) {
+          this.player.shieldActiveTimer -= dt;
+          this.player.hp = Math.min(this.player.maxHp, this.player.hp + dt * 4.5);
+          this.witchModel.shieldRing.rotation.z += dt * 3.5;
+          document.getElementById('shield-badge').classList.remove('hidden');
+          if (this.player.shieldActiveTimer <= 0) {
+            this.witchModel.shieldGroup.visible = false;
+            document.getElementById('shield-badge').classList.add('hidden');
+          }
+        }
+
+        this.player.mana = Math.min(this.player.maxMana, this.player.mana + dt * 5.0);
+
+        let moveX = this.joystickVec.x;
+        let moveZ = this.joystickVec.y;
+
+        if (this.keys['KeyW'] || this.keys['ArrowUp']) moveZ -= 1;
+        if (this.keys['KeyS'] || this.keys['ArrowDown']) moveZ += 1;
+        if (this.keys['KeyA'] || this.keys['ArrowLeft']) moveX -= 1;
+        if (this.keys['KeyD'] || this.keys['ArrowRight']) moveX += 1;
+
+        const inputVec = new THREE.Vector2(moveX, moveZ);
+        const isMoving = inputVec.lengthSq() > 0.01;
+
+        if (isMoving) {
+          inputVec.normalize();
+          const forward = new THREE.Vector3(-Math.sin(this.camState.yaw), 0, -Math.cos(this.camState.yaw));
+          const right = new THREE.Vector3(Math.cos(this.camState.yaw), 0, -Math.sin(this.camState.yaw));
+
+          const worldDir = new THREE.Vector3()
+            .addScaledVector(forward, -inputVec.y)
+            .addScaledVector(right, inputVec.x)
+            .normalize();
+
+          const currentSpeed = this.player.dashTimer > 0 ? this.player.speed * 2.65 : this.player.speed;
+          this.player.pos.addScaledVector(worldDir, currentSpeed * dt);
+
+          const targetAngle = Math.atan2(worldDir.x, worldDir.z);
+          let diff = targetAngle - this.player.rotY;
+          while (diff > Math.PI) diff -= Math.PI * 2;
+          while (diff < -Math.PI) diff += Math.PI * 2;
+          this.player.rotY += diff * Math.min(1, dt * 15);
+        } else if (this.player.dashTimer > 0) {
+          const forward = new THREE.Vector3(Math.sin(this.player.rotY), 0, Math.cos(this.player.rotY));
+          this.player.pos.addScaledVector(forward, this.player.speed * 2.65 * dt);
+        }
+
+        // Pós-imagens e partículas durante o Passo Etéreo
+        if (this.player.dashTimer > 0) {
+          this.player.afterimageTimer -= dt;
+          if (this.player.afterimageTimer <= 0) {
+            this.player.afterimageTimer = 0.045;
+            this.spawnWitchAfterimage();
+            this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 1.0, 0)), 0xfde047, 2, 2.0);
+          }
+        }
+
+        if (!this.player.grounded) {
+          this.player.vel.y -= 26 * dt;
+          this.player.pos.y += this.player.vel.y * dt;
+          if (this.player.pos.y <= 0) {
+            this.player.pos.y = 0;
+            this.player.vel.y = 0;
+            this.player.grounded = true;
+          }
+        }
+
+        this.resolveArenaBoundsAndObstacles(this.player.pos, 0.72);
+        this.checkCrystalPickup(this.player.pos, 1.45);
+
+        // Atualiza malha e animações fluidas da Bruxa
+        this.witchModel.root.position.copy(this.player.pos);
+        this.witchModel.root.rotation.y = this.player.rotY;
+        this.witchModel.footAura.rotation.z = this.elapsed * 0.9;
+
+        const walkBob = isMoving && this.player.grounded ? Math.sin(this.elapsed * 14) * 0.08 : 0;
+        this.witchModel.root.position.y += Math.abs(walkBob);
+
+        // Balanço orgânico do chapéu, ponta dobrada e capa segmentada
+        this.witchModel.hatGroup.rotation.z = isMoving ? Math.sin(this.elapsed * 12) * 0.07 : Math.sin(this.elapsed * 2.2) * 0.025;
+        this.witchModel.hatTipPivot.rotation.x = isMoving ? -0.22 + Math.sin(this.elapsed * 14) * 0.14 : Math.sin(this.elapsed * 2.8) * 0.06;
+        this.witchModel.capeGroup.rotation.x = isMoving ? 0.38 + Math.sin(this.elapsed * 14) * 0.1 : 0.14 + Math.sin(this.elapsed * 2.5) * 0.04;
+        this.witchModel.capeSeg2Pivot.rotation.x = isMoving ? 0.25 + Math.cos(this.elapsed * 14) * 0.14 : 0.08 + Math.cos(this.elapsed * 2.5) * 0.05;
+
+        this.witchModel.staffPivot.rotation.x = this.player.castAnimTimer > 0 ? -0.65 : Math.sin(this.elapsed * 3) * 0.08;
+        this.witchModel.orbMesh.rotation.y = this.elapsed * 3.5;
+        this.witchModel.staffRuneRing.rotation.x = this.elapsed * 2.4;
+        this.witchModel.staffRuneRing.rotation.y = this.elapsed * 3.1;
+        this.witchModel.root.visible = this.player.invulnTimer <= 0 || Math.floor(this.elapsed * 20) % 2 === 0;
+      }
+
+      updateBlackCat(dt) {
+        this.cat.commandCooldown = Math.max(0, this.cat.commandCooldown - dt);
+        this.cat.autoAttackCooldown = Math.max(0, this.cat.autoAttackCooldown - dt);
+        this.cat.healCooldown = Math.max(0, this.cat.healCooldown - dt);
+
+        if (this.cat.astralTimer > 0) {
+          this.cat.astralTimer -= dt;
+          this.catModel.astralStars.rotation.y = this.elapsed * 3.5;
+          if (Math.random() < 0.45) {
+            this.spawnBurstParticles(this.cat.pos.clone().add(new THREE.Vector3(0, 0.45, 0)), 0xfde047, 1, 1.5);
+          }
+          if (this.cat.astralTimer <= 0) {
+            this.setCatAstralVisual(false);
+          }
+        }
+
+        if (this.player.hp < this.player.maxHp * 0.65 && this.cat.healCooldown <= 0) {
+          this.cat.healCooldown = 9.0;
+          const healAmount = 22;
+          this.player.hp = Math.min(this.player.maxHp, this.player.hp + healAmount);
+          this.sound.playCatMeow(true);
+          this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 1.1, 0)), 0x34d399, 20, 4.4);
+          this.showToast(`✦ Miado Curativo! +${healAmount} de Vida`, 'text-emerald-300 border-emerald-400/50');
+        }
+
+        if (this.cat.mode === 'ATTACK' && (!this.cat.targetEnemy || this.cat.targetEnemy.hp <= 0)) {
+          this.cat.mode = 'FOLLOW';
+          this.cat.targetEnemy = null;
+        }
+
+        if (this.cat.mode !== 'ATTACK') {
+          let closestCrystal = null;
+          let minCDist = 16;
+          for (const c of this.crystals) {
+            const d = this.cat.pos.distanceTo(c.pos);
+            if (d < minCDist) {
+              minCDist = d;
+              closestCrystal = c;
+            }
+          }
+
+          if (closestCrystal) {
+            this.cat.mode = 'COLLECT';
+            this.cat.targetCrystal = closestCrystal;
+          } else if (this.cat.autoAttackCooldown <= 0) {
+            const nearbyEnemy = this.findNearestEnemy(this.player.pos, 12);
+            if (nearbyEnemy) {
+              this.cat.mode = 'ATTACK';
+              this.cat.targetEnemy = nearbyEnemy;
+              this.cat.autoAttackCooldown = this.cat.astralTimer > 0 ? 2.5 : 5.0;
+            } else {
+              this.cat.mode = 'FOLLOW';
+            }
+          } else {
+            this.cat.mode = 'FOLLOW';
+          }
+        }
+
+        const astralMult = this.cat.astralTimer > 0 ? 1.5 : 1.0;
+        let catSpeed = 11.0 * astralMult;
+        let desiredPos = null;
+        let isRunning = false;
+
+        if (this.cat.mode === 'ATTACK' && this.cat.targetEnemy) {
+          desiredPos = this.cat.targetEnemy.pos;
+          catSpeed = 17.5 * astralMult;
+          isRunning = true;
+
+          // Trilha violeta/dourada no salto de ataque do gato
+          if (Math.random() < 0.65) {
+            this.spawnBurstParticles(
+              this.cat.pos.clone().add(new THREE.Vector3(0, 0.4, 0)),
+              this.cat.astralTimer > 0 ? 0xfde047 : 0xc084fc,
+              1,
+              1.6
+            );
+          }
+
+          const distToEnemy = this.cat.pos.distanceTo(desiredPos);
+          if (distToEnemy < 1.45) {
+            const isFrozen = this.cat.targetEnemy.frozenTimer > 0;
+            const baseDmg = this.cat.astralTimer > 0 ? 64 : 34;
+            const finalDmg = isFrozen ? baseDmg * 2 : baseDmg;
+
+            if (isFrozen) {
+              this.cat.targetEnemy.frozenTimer = 0;
+              this.cat.targetEnemy.model.iceBlock.visible = false;
+              this.catCombos++;
+              this.addCameraShake(0.22);
+              this.spawnBurstParticles(this.cat.targetEnemy.pos.clone().add(new THREE.Vector3(0, 1, 0)), 0x67e8f9, 26, 7.8);
+              this.showToast(`✦ Combo Estilhaçador Crítico! -${finalDmg} HP`, 'text-cyan-200 border-cyan-300/60');
+            }
+
+            this.damageEnemy(this.cat.targetEnemy, finalDmg, isFrozen || this.cat.astralTimer > 0);
+            this.cat.targetEnemy.stunTimer = 2.2;
+            this.player.mana = Math.min(this.player.maxMana, this.player.mana + 15);
+            this.cat.mode = 'FOLLOW';
+            this.cat.targetEnemy = null;
+          }
+        } else if (this.cat.mode === 'COLLECT' && this.cat.targetCrystal) {
+          desiredPos = this.cat.targetCrystal.pos;
+          catSpeed = 13.0 * astralMult;
+          isRunning = true;
+        } else {
+          const offset = new THREE.Vector3(-1.35, 0, -0.95).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.player.rotY);
+          desiredPos = this.player.pos.clone().add(offset);
+        }
+
+        const toTarget = new THREE.Vector3().subVectors(desiredPos, this.cat.pos).setY(0);
+        const dist = toTarget.length();
+
+        if (dist > 0.35) {
+          isRunning = true;
+          toTarget.normalize();
+          this.cat.pos.addScaledVector(toTarget, Math.min(dist, catSpeed * dt));
+          this.cat.rotY = Math.atan2(toTarget.x, toTarget.z);
+        }
+
+        const hopY = isRunning ? Math.abs(Math.sin(this.elapsed * 16)) * 0.28 : 0;
+        this.cat.pos.y = this.cat.mode === 'ATTACK' ? 0.45 + Math.abs(Math.sin(this.elapsed * 18)) * 0.65 : hopY;
+
+        this.checkCrystalPickup(this.cat.pos, 1.35);
+
+        this.catModel.root.position.copy(this.cat.pos);
+        this.catModel.root.rotation.y = this.cat.rotY;
+
+        // Ondulação orgânica da cauda multi-segmentada
+        this.catModel.tailSegments.forEach((seg, idx) => {
+          seg.rotation.z = Math.sin(this.elapsed * 6.5 - idx * 0.8) * (0.28 + idx * 0.08);
+          seg.rotation.x = Math.cos(this.elapsed * 4.5 - idx * 0.6) * 0.12;
+        });
+
+        this.catModel.legs.forEach((leg, idx) => {
+          const phase = idx % 2 === 0 ? 0 : Math.PI;
+          leg.rotation.x = isRunning ? Math.sin(this.elapsed * 18 + phase) * 0.65 : 0;
+        });
+
+        const statusEl = document.getElementById('cat-status-text');
+        if (this.cat.mode === 'ATTACK') {
+          statusEl.textContent = 'Atacando monstro!';
+        } else if (this.cat.mode === 'COLLECT') {
+          statusEl.textContent = 'Coletando cristal/relíquia';
+        } else if (this.cat.astralTimer > 0) {
+          statusEl.textContent = `Forma Astral (${this.cat.astralTimer.toFixed(1)}s)`;
+        } else {
+          statusEl.textContent = 'Protegendo a bruxa';
+        }
+      }
+
+      checkCrystalPickup(actorPos, pickupRadius) {
+        for (let i = this.crystals.length - 1; i >= 0; i--) {
+          const c = this.crystals[i];
+          const dx = actorPos.x - c.pos.x;
+          const dz = actorPos.z - c.pos.z;
+          if (dx * dx + dz * dz <= pickupRadius * pickupRadius) {
+            this.player.mana = Math.min(this.player.maxMana, this.player.mana + c.manaValue);
+            this.score += c.isTimeRelic ? 150 : 25;
+            this.sound.playCrystalPickup(c.isTimeRelic);
+            this.spawnBurstParticles(c.pos, c.isTimeRelic ? 0xfde047 : 0x38bdf8, 16, 4.4);
+
+            if (c.isTimeRelic) {
+              this.timeRemaining += c.timeBonus;
+              this.showToast(`✦ Relíquia Temporal coletada! +${c.timeBonus}s`, 'text-amber-200 border-amber-400/60');
+            }
+
+            this.scene.remove(c.mesh);
+            this.crystals.splice(i, 1);
+          }
+        }
+      }
+
+      updateProjectilesAndMeteors(dt) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+          const p = this.projectiles[i];
+          p.life -= dt;
+          p.pos.addScaledVector(p.vel, dt);
+          p.mesh.position.copy(p.pos);
+          p.mesh.rotation.y += dt * 9;
+
+          // Trilha contínua de partículas nos projéteis
+          if (Math.random() < 0.7) {
+            this.spawnBurstParticles(
+              p.pos,
+              p.type === 'frost' ? 0x67e8f9 : 0xe879f9,
+              1,
+              1.1
+            );
+          }
+
+          let hit = false;
+          for (const enemy of this.enemies) {
+            const dist = Math.hypot(p.pos.x - enemy.pos.x, p.pos.z - enemy.pos.z);
+            if (dist <= enemy.model.radius + 0.5) {
+              if (p.type === 'orb') {
+                this.player.mana = Math.min(this.player.maxMana, this.player.mana + 4);
+                this.damageEnemy(enemy, p.damage);
+              } else if (p.type === 'frost') {
+                enemy.frozenTimer = 4.0;
+                enemy.model.iceBlock.visible = true;
+                this.damageEnemy(enemy, p.damage);
+                this.spawnBurstParticles(enemy.pos.clone().add(new THREE.Vector3(0, 1, 0)), 0x67e8f9, 20, 5.8);
+              }
+              hit = true;
+              break;
+            }
+          }
+
+          if (hit || p.life <= 0) {
+            this.scene.remove(p.mesh);
+            this.projectiles.splice(i, 1);
+          }
+        }
+
+        for (let i = this.meteors.length - 1; i >= 0; i--) {
+          const m = this.meteors[i];
+          if (m.delay > 0) {
+            m.delay -= dt;
+            continue;
+          }
+
+          const dir = new THREE.Vector3().subVectors(m.targetPos, m.mesh.position);
+          const dist = dir.length();
+          m.mesh.rotation.x += dt * 6;
+          m.mesh.rotation.z += dt * 5;
+
+          if (Math.random() < 0.75) {
+            this.spawnBurstParticles(m.mesh.position, 0xf59e0b, 1, 1.8);
+          }
+
+          if (dist <= 0.8 || m.mesh.position.y <= 0.4) {
+            this.sound.playMeteorImpact();
+            this.addCameraShake(0.18);
+            this.spawnBurstParticles(m.targetPos.clone().add(new THREE.Vector3(0, 0.5, 0)), 0xfde047, 24, 7.8);
+
+            this.enemies.forEach(enemy => {
+              if (enemy.pos.distanceTo(m.targetPos) <= 3.6) {
+                this.damageEnemy(enemy, 45);
+              }
+            });
+
+            const fireDisc = new THREE.Mesh(
+              new THREE.CircleGeometry(2.6, 24),
+              new THREE.MeshBasicMaterial({
+                color: 0xd97706,
+                transparent: true,
+                opacity: 0.62
+              })
+            );
+            fireDisc.rotation.x = -Math.PI / 2;
+            fireDisc.position.set(m.targetPos.x, 0.04, m.targetPos.z);
+            this.scene.add(fireDisc);
+
+            this.fireZones.push({
+              mesh: fireDisc,
+              pos: m.targetPos.clone(),
+              life: 3.5,
+              tickTimer: 0
+            });
+
+            this.scene.remove(m.mesh);
+            this.meteors.splice(i, 1);
+          } else {
+            dir.normalize();
+            m.mesh.position.addScaledVector(dir, m.speed * dt);
+          }
+        }
+
+        for (let i = this.fireZones.length - 1; i >= 0; i--) {
+          const fz = this.fireZones[i];
+          fz.life -= dt;
+          fz.tickTimer += dt;
+          fz.mesh.material.opacity = Math.min(0.62, fz.life * 0.35);
+
+          if (fz.tickTimer >= 0.5) {
+            fz.tickTimer = 0;
+            this.enemies.forEach(enemy => {
+              if (enemy.pos.distanceTo(fz.pos) <= 2.7) {
+                this.damageEnemy(enemy, 14);
+              }
+            });
+          }
+
+          if (fz.life <= 0) {
+            this.scene.remove(fz.mesh);
+            this.fireZones.splice(i, 1);
+          }
+        }
+      }
+
+      updateEnemies(dt) {
+        for (let i = this.enemies.length - 1; i >= 0; i--) {
+          const enemy = this.enemies[i];
+          enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+
+          if (enemy.frozenTimer > 0) {
+            enemy.frozenTimer -= dt;
+            if (enemy.frozenTimer <= 0) {
+              enemy.model.iceBlock.visible = false;
+            }
+            continue;
+          }
+
+          if (enemy.type === 'slime') {
+            const squish = 1 + Math.sin(this.elapsed * 8 + enemy.bobOffset) * 0.14;
+            enemy.model.body.scale.set(1.12 * squish, 0.86 / squish, 1.12 * squish);
+            enemy.model.core.rotation.y = this.elapsed * 3 + enemy.bobOffset;
+          } else if (enemy.type === 'bat') {
+            enemy.model.wingL.rotation.z = Math.sin(this.elapsed * 18 + enemy.bobOffset) * 0.55;
+            enemy.model.wingR.rotation.z = -Math.sin(this.elapsed * 18 + enemy.bobOffset) * 0.55;
+            enemy.model.root.position.y = Math.sin(this.elapsed * 5 + enemy.bobOffset) * 0.25;
+          } else if (enemy.type === 'golem') {
+            enemy.model.armL.rotation.x = Math.sin(this.elapsed * 5 + enemy.bobOffset) * 0.35;
+            enemy.model.armR.rotation.x = -Math.sin(this.elapsed * 5 + enemy.bobOffset) * 0.35;
+            enemy.model.core.rotation.y = this.elapsed * 2.5;
+            enemy.model.shoulderL.position.y = 2.45 + Math.sin(this.elapsed * 4) * 0.12;
+            enemy.model.shoulderR.position.y = 2.45 - Math.sin(this.elapsed * 4) * 0.12;
+          }
+
+          if (enemy.stunTimer > 0) {
+            enemy.stunTimer -= dt;
+            enemy.model.root.rotation.y += dt * 10;
+            continue;
+          }
+
+          const toPlayer = new THREE.Vector3().subVectors(this.player.pos, enemy.pos).setY(0);
+          const dist = toPlayer.length();
+
+          if (dist > enemy.model.radius + 0.55) {
+            toPlayer.normalize();
+            enemy.pos.addScaledVector(toPlayer, enemy.speed * dt);
+            enemy.model.root.rotation.y = Math.atan2(toPlayer.x, toPlayer.z);
+          } else if (enemy.attackCooldown <= 0 && this.player.invulnTimer <= 0 && this.player.pos.y < 1.3) {
+            const rawDmg = enemy.type === 'golem' ? 22 : (enemy.type === 'bat' ? 11 : 13);
+            const finalDmg = this.player.shieldActiveTimer > 0 ? Math.ceil(rawDmg * 0.25) : rawDmg;
+
+            this.player.hp = Math.max(0, this.player.hp - finalDmg);
+            this.player.invulnTimer = 0.85;
+            enemy.attackCooldown = 1.25;
+            this.sound.playPlayerHurt();
+            this.addCameraShake(0.24);
+            this.spawnBurstParticles(this.player.pos.clone().add(new THREE.Vector3(0, 1, 0)), 0xf43f5e, 14, 4.5);
+
+            if (this.player.hp <= 0) {
+              this.triggerEndGame(false);
+              return;
+            }
+          }
+
+          for (let j = 0; j < this.enemies.length; j++) {
+            if (i === j) continue;
+            const other = this.enemies[j];
+            const diff = new THREE.Vector3().subVectors(enemy.pos, other.pos).setY(0);
+            const d = diff.length();
+            const minSep = enemy.model.radius + other.model.radius;
+            if (d > 0.001 && d < minSep) {
+              diff.normalize();
+              enemy.pos.addScaledVector(diff, (minSep - d) * 0.5);
+            }
+          }
+
+          this.resolveArenaBoundsAndObstacles(enemy.pos, enemy.model.radius);
+          enemy.model.root.position.x = enemy.pos.x;
+          enemy.model.root.position.z = enemy.pos.z;
+        }
+
+        if (this.enemies.length === 0 && this.state === 'PLAYING') {
+          this.waveTransitionTimer += dt;
+          if (this.waveTransitionTimer >= 1.4) {
+            this.waveTransitionTimer = 0;
+            const nextWave = this.wave + 1;
+            this.player.hp = Math.min(this.player.maxHp, this.player.hp + 15);
+            this.spawnWave(nextWave);
+            this.showToast(`✦ Onda ${nextWave} chegou! (+15 Vida restaurada)`, 'text-amber-200 border-amber-400/50');
+          }
+        }
+      }
+
+      resolveArenaBoundsAndObstacles(pos, entityRadius) {
+        // Mantém entidades dentro do limite circular da clareira mágica
+        const maxArenaRadius = 48.0 - entityRadius;
+        const distFromCenter = Math.hypot(pos.x, pos.z);
+        if (distFromCenter > maxArenaRadius && distFromCenter > 0.001) {
+          const scale = maxArenaRadius / distFromCenter;
+          pos.x *= scale;
+          pos.z *= scale;
+        }
+
+        // Resolve colisões suaves com árvores e monólitos rúnicos
+        for (const obs of this.forest.obstacles) {
+          const dx = pos.x - obs.x;
+          const dz = pos.z - obs.z;
+          const dist = Math.hypot(dx, dz);
+          const minSep = obs.radius + entityRadius;
+          if (dist > 0.0001 && dist < minSep) {
+            const push = (minSep - dist) / dist;
+            pos.x += dx * push;
+            pos.z += dz * push;
+          }
+        }
+      }
+
+      updateEnemyHealthBars(dt) {
+        const tempVec = new THREE.Vector3();
+        for (const enemy of this.enemies) {
+          if (!enemy.hpBar) continue;
+
+          // Rastro suave da barra de dano (ghost bar)
+          if (enemy.ghostHp > enemy.hp) {
+            enemy.ghostHp = Math.max(enemy.hp, enemy.ghostHp - enemy.maxHp * 0.65 * dt);
+            enemy.hpBar.ghostEl.style.width = `${(enemy.ghostHp / enemy.maxHp) * 100}%`;
+          }
+
+          // Destaque visual quando o inimigo está congelado
+          if (enemy.frozenTimer > 0) {
+            enemy.hpBar.frameEl.classList.add('frozen');
+          } else {
+            enemy.hpBar.frameEl.classList.remove('frozen');
+          }
+
+          const headOffset = enemy.type === 'golem' ? 3.85 : (enemy.type === 'bat' ? 2.35 : 1.62);
+          tempVec.set(enemy.pos.x, enemy.pos.y + headOffset, enemy.pos.z);
+
+          const distToCam = this.camera.position.distanceTo(tempVec);
+          tempVec.project(this.camera);
+
+          // Esconde se estiver atrás da câmera ou muito distante
+          if (tempVec.z > 1 || distToCam > 44) {
+            enemy.hpBar.el.style.opacity = '0';
+            continue;
+          }
+
+          const x = (tempVec.x * 0.5 + 0.5) * window.innerWidth;
+          const y = (-tempVec.y * 0.5 + 0.5) * window.innerHeight;
+          const scale = Math.max(0.68, Math.min(1.12, 13 / Math.max(8, distToCam)));
+          const alpha = distToCam > 34 ? Math.max(0, 1 - (distToCam - 34) / 10) : 0.96;
+
+          enemy.hpBar.el.style.left = `${x}px`;
+          enemy.hpBar.el.style.top = `${y}px`;
+          enemy.hpBar.el.style.opacity = `${alpha}`;
+          enemy.hpBar.el.style.transform = `translate(-50%, -100%) scale(${scale.toFixed(3)})`;
+        }
+      }
+
+      updateVisualEffects(dt) {
+        this.crystals.forEach((c, idx) => {
+          c.mesh.rotation.y = this.elapsed * (c.isTimeRelic ? 3.2 : 2.4) + idx;
+          c.mesh.position.y = 0.78 + Math.sin(this.elapsed * 3.2 + idx) * 0.16;
+        });
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const pt = this.particles[i];
+          pt.life -= dt;
+          pt.vel.y -= 9.8 * dt;
+          pt.mesh.position.addScaledVector(pt.vel, dt);
+          pt.mesh.scale.setScalar(Math.max(0.01, pt.life * 2.2));
+          if (pt.life <= 0) {
+            this.scene.remove(pt.mesh);
+            this.particles.splice(i, 1);
+          }
+        }
+
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+          const sw = this.shockwaves[i];
+          sw.age += dt;
+          const t = sw.age / sw.maxAge;
+          const scale = 1 + t * sw.maxRadius;
+          sw.mesh.scale.set(scale, scale, 1);
+          sw.mesh.rotation.z += dt * 2.0;
+          sw.mesh.material.opacity = Math.max(0, (1 - t) * 0.9);
+          if (sw.age >= sw.maxAge) {
+            this.scene.remove(sw.mesh);
+            this.shockwaves.splice(i, 1);
+          }
+        }
+
+        // Atualiza pós-imagens do Passo Etéreo
+        for (let i = this.afterimages.length - 1; i >= 0; i--) {
+          const ai = this.afterimages[i];
+          ai.life -= dt;
+          ai.mat.opacity = Math.max(0, (ai.life / ai.maxLife) * 0.45);
+          if (ai.life <= 0) {
+            this.scene.remove(ai.mesh);
+            this.afterimages.splice(i, 1);
+          }
+        }
+      }
+
+      updateCamera(dt) {
+        if (this.state === 'MENU') {
+          const angle = this.elapsed * 0.25;
+          this.camera.position.set(Math.sin(angle) * 12, 5.5, Math.cos(angle) * 12);
+          this.camera.lookAt(0, 1.4, 0);
+          return;
+        }
+
+        const smoothFactor = 1 - Math.exp(-16 * dt);
+        this.camState.yaw += (this.camState.targetYaw - this.camState.yaw) * smoothFactor;
+        this.camState.pitch += (this.camState.targetPitch - this.camState.pitch) * smoothFactor;
+        this.camState.dist += (this.camState.targetDist - this.camState.dist) * smoothFactor;
+
+        const targetFov = this.player.dashTimer > 0 ? 70 : 60;
+        this.camState.currentFov += (targetFov - this.camState.currentFov) * (1 - Math.exp(-12 * dt));
+        if (Math.abs(this.camera.fov - this.camState.currentFov) > 0.05) {
+          this.camera.fov = this.camState.currentFov;
+          this.camera.updateProjectionMatrix();
+        }
+
+        const rightVec = new THREE.Vector3(Math.cos(this.camState.yaw), 0, -Math.sin(this.camState.yaw));
+        const desiredLook = new THREE.Vector3(
+          this.player.pos.x,
+          this.player.pos.y + 1.65,
+          this.player.pos.z
+        ).addScaledVector(rightVec, 0.55);
+
+        const horizDist = Math.cos(this.camState.pitch) * this.camState.dist;
+        const vertDist = Math.sin(this.camState.pitch) * this.camState.dist;
+
+        const desiredCamPos = new THREE.Vector3(
+          desiredLook.x + Math.sin(this.camState.yaw) * horizDist,
+          Math.max(1.15, desiredLook.y + vertDist),
+          desiredLook.z + Math.cos(this.camState.yaw) * horizDist
+        );
+
+        for (const obs of this.forest.obstacles) {
+          const dx = desiredCamPos.x - obs.x;
+          const dz = desiredCamPos.z - obs.z;
+          const d = Math.hypot(dx, dz);
+          const minCamR = obs.radius + 0.75;
+          if (d > 0.001 && d < minCamR) {
+            const push = (minCamR - d) / d;
+            desiredCamPos.x += dx * push;
+            desiredCamPos.z += dz * push;
+          }
+        }
+
+        const posLerp = 1 - Math.exp(-18 * dt);
+        this.camState.currentPos.lerp(desiredCamPos, posLerp);
+        this.camState.currentLook.lerp(desiredLook, posLerp);
+
+        this.camera.position.copy(this.camState.currentPos);
+        if (this.camState.shakeIntensity > 0.005) {
+          this.camera.position.x += (Math.random() - 0.5) * this.camState.shakeIntensity;
+          this.camera.position.y += (Math.random() - 0.5) * this.camState.shakeIntensity;
+          this.camera.position.z += (Math.random() - 0.5) * this.camState.shakeIntensity;
+          this.camState.shakeIntensity *= Math.exp(-8 * dt);
+        }
+
+        this.camera.lookAt(this.camState.currentLook);
+      }
+
+      updateHUD() {
+        document.getElementById('hp-bar').style.width = `${(this.player.hp / this.player.maxHp) * 100}%`;
+        document.getElementById('hp-text').textContent = `${Math.ceil(this.player.hp)} / ${this.player.maxHp}`;
+
+        document.getElementById('mana-bar').style.width = `${(this.player.mana / this.player.maxMana) * 100}%`;
+        document.getElementById('mana-text').textContent = `${Math.floor(this.player.mana)} / ${this.player.maxMana}`;
+
+        document.getElementById('wave-text').textContent = this.wave;
+        document.getElementById('kills-text').textContent = this.kills;
+        document.getElementById('score-text').textContent = this.score;
+
+        document.getElementById('cd-nova-overlay').style.transform = `scaleY(${Math.min(1, this.player.novaCooldown / 2.6)})`;
+        document.getElementById('cd-meteor-overlay').style.transform = `scaleY(${Math.min(1, this.player.meteorCooldown / 5.5)})`;
+        document.getElementById('cd-frost-overlay').style.transform = `scaleY(${Math.min(1, this.player.frostCooldown / 4.2)})`;
+        document.getElementById('cd-shield-overlay').style.transform = `scaleY(${Math.min(1, this.player.shieldCooldown / 11.0)})`;
+        document.getElementById('cd-cat-overlay').style.transform = `scaleY(${Math.min(1, this.cat.commandCooldown / 3.8)})`;
+        document.getElementById('cd-dash-overlay').style.transform = `scaleY(${Math.min(1, this.player.dashCooldown / 1.5)})`;
+
+        const catBadge = document.getElementById('cat-cd-badge');
+        if (this.cat.commandCooldown > 0) {
+          catBadge.textContent = `${this.cat.commandCooldown.toFixed(1)}s`;
+          catBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-600';
+        } else {
+          catBadge.textContent = 'Pronto [E]';
+          catBadge.className = 'text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/40';
+        }
+      }
+
+      triggerEndGame(survivedEclipse = false) {
+        this.state = 'GAMEOVER';
+        if (document.pointerLockElement === this.canvas) {
+          document.exitPointerLock();
+        }
+        document.getElementById('hud').classList.add('hidden');
+        document.getElementById('crosshair').classList.add('hidden');
+        document.getElementById('enemy-hp-layer').innerHTML = '';
+
+        const sMins = Math.floor(this.timeSurvived / 60);
+        const sSecs = Math.floor(this.timeSurvived % 60);
+        const finalScoreVal = this.score + (survivedEclipse ? 1000 : 0);
+
+        const isNewRecord = finalScoreVal > this.bestScore;
+        if (isNewRecord) {
+          this.bestScore = finalScoreVal;
+          localStorage.setItem('bruxa_gato_best_score', String(this.bestScore));
+        }
+
+        document.getElementById('final-time').textContent = `${String(sMins).padStart(2, '0')}:${String(sSecs).padStart(2, '0')}`;
+        document.getElementById('final-wave').textContent = this.wave;
+        document.getElementById('final-kills').textContent = this.kills;
+        document.getElementById('final-combos').textContent = this.catCombos;
+        document.getElementById('final-score').textContent = finalScoreVal;
+
+        const recordBadge = document.getElementById('new-record-badge');
+        if (isNewRecord && finalScoreVal > 0) {
+          recordBadge.classList.remove('hidden');
+        } else {
+          recordBadge.classList.add('hidden');
+        }
+
+        const glowOrb = document.getElementById('end-glow-orb');
+        const crestContainer = document.getElementById('end-crest-container');
+        const endBadge = document.getElementById('end-badge');
+        const endTitle = document.getElementById('end-title');
+        const endSubtitle = document.getElementById('end-subtitle');
+
+        if (survivedEclipse) {
+          glowOrb.className = 'absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-amber-400/20 rounded-full blur-3xl pointer-events-none';
+          endBadge.textContent = '✦ Eclipse Purificado ✦';
+          endBadge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10 bg-amber-400/20 text-amber-200 border border-amber-300/60';
+          endTitle.textContent = 'Vitória da Bruxa Arcana!';
+          endTitle.className = 'font-magic text-2xl sm:text-3xl font-black text-amber-300 mb-2 relative z-10';
+          endSubtitle.textContent = 'Vocês resistiram ao Eclipse Lunar e restauraram a luz estelar na floresta (+1000 pts de bônus)!';
+          crestContainer.innerHTML = `
+            <svg width="78" height="78" viewBox="0 0 80 80" fill="none" class="drop-shadow-[0_0_18px_rgba(250,204,21,0.75)]">
+              <circle cx="40" cy="40" r="34" stroke="#fde047" stroke-width="1.6" stroke-dasharray="6 3"/>
+              <path d="M22 48L26 28L35 37L40 22L45 37L54 28L58 48H22Z" fill="#fde047" stroke="#fef08a" stroke-width="1.4"/>
+              <rect x="22" y="51" width="36" height="5" rx="2.5" fill="#c084fc"/>
+              <circle cx="40" cy="17" r="3" fill="#fef08a"/>
+            </svg>
+          `;
+        } else {
+          glowOrb.className = 'absolute -top-24 left-1/2 -translate-x-1/2 w-80 h-80 bg-rose-600/25 rounded-full blur-3xl pointer-events-none';
+          endBadge.textContent = '✦ Eclipse Sombrio ✦';
+          endBadge.className = 'inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold uppercase tracking-wider mb-2 relative z-10 bg-rose-500/20 text-rose-200 border border-rose-400/50';
+          endTitle.textContent = 'A Magia se Dissipou...';
+          endTitle.className = 'font-magic text-2xl sm:text-3xl font-black text-rose-300 mb-2 relative z-10';
+          endSubtitle.textContent = 'A névoa sombria envolveu a floresta antes do fim do eclipse, mas o seu gato sombrio aguarda fielmente o seu retorno.';
+          crestContainer.innerHTML = `
+            <svg width="78" height="78" viewBox="0 0 80 80" fill="none" class="drop-shadow-[0_0_18px_rgba(244,63,94,0.65)]">
+              <circle cx="40" cy="40" r="34" stroke="#fb7185" stroke-opacity="0.6" stroke-width="1.5" stroke-dasharray="4 4"/>
+              <!-- Lua Eclipse Estilhaçada -->
+              <path d="M45 17C33 19 25 29 25 41C25 53 34 62 46 63C37 59 32 50 32 40C32 30 37 21 45 17Z" fill="#fda4af"/>
+              <path d="M43 32L55 25M46 41L59 41M43 50L55 57" stroke="#e879f9" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="51" cy="34" r="2" fill="#fde047"/>
+            </svg>
+          `;
+        }
+
+        document.getElementById('gameover-screen').classList.remove('hidden');
+      }
+
+      animate() {
+        requestAnimationFrame(() => this.animate());
+
+        const dt = Math.min(this.clock.getDelta(), 0.05);
+        this.elapsed += dt;
+
+        this.forest.update(this.elapsed);
+
+        if (this.state === 'PLAYING') {
+          this.updateEclipseTimer(dt);
+          if (this.state !== 'PLAYING') return;
+
+          this.updateWitch(dt);
+          this.updateBlackCat(dt);
+          this.updateProjectilesAndMeteors(dt);
+          this.updateEnemies(dt);
+          this.updateVisualEffects(dt);
+          this.updateHUD();
+        } else {
+          this.witchModel.footAura.rotation.z = this.elapsed * 0.9;
+          this.witchModel.hatGroup.rotation.z = Math.sin(this.elapsed * 2) * 0.04;
+          this.witchModel.hatTipPivot.rotation.x = Math.sin(this.elapsed * 2.5) * 0.08;
+          this.witchModel.staffRuneRing.rotation.x = this.elapsed * 2.2;
+          this.witchModel.staffRuneRing.rotation.y = this.elapsed * 2.8;
+          this.catModel.tailSegments.forEach((seg, idx) => {
+            seg.rotation.z = Math.sin(this.elapsed * 4.5 - idx * 0.7) * 0.28;
+          });
+          this.updateVisualEffects(dt);
+        }
+
+        this.updateCamera(dt);
+        if (this.state === 'PLAYING') {
+          this.updateEnemyHealthBars(dt);
+        }
+        // Renderiza com Pós-Processamento UnrealBloomPass
+        this.composer.render();
+      }
+    }
+
+    window.onload = function () {
+      const game = new WitchAdventureGame();
+      game.animate();
+    };
+  </script>
+</body>
+</html>
